@@ -38,7 +38,6 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun TransactionListing(
-    modifier: Modifier = Modifier,
     viewModel: PaymentViewModel = hiltViewModel()
 ) {
     LazyColumn(modifier = Modifier.fillMaxSize()) {
