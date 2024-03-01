@@ -42,7 +42,9 @@ fun TransactionListing(
 ) {
     LazyColumn {
         item {
-            PrimaryButton(onClick = {}) {
+            PrimaryButton(onClick = {
+                viewModel.retrieveKey()
+            }) {
                 Text(text = "OK")
             }
         }
