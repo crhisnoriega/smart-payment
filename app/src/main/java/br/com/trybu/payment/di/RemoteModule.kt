@@ -1,6 +1,7 @@
 package br.com.trybu.payment.di
 
 
+import br.com.trybu.payment.api.SmartPaymentAPI
 import com.google.gson.GsonBuilder
 import dagger.Module
 import dagger.Provides
@@ -17,13 +18,20 @@ object RemoteModule {
 
     @Singleton
     @Provides
+    fun providePaymentApi(
+        retrofit: Retrofit
+    ): SmartPaymentAPI {
+        return retrofit.create(SmartPaymentAPI::class.java)
+    }
+
+    @Singleton
+    @Provides
     fun provideRetrofit(): Retrofit {
         val gson = GsonBuilder().create()
         val httpClient = OkHttpClient()
         return Retrofit.Builder()
-            .baseUrl("")
+            .baseUrl("https://svc-hom.elosgate.com.br/generated/gatewaysvc.svc/json")
             .addConverterFactory(GsonConverterFactory.create(gson))
-            .client(httpClient)
-            .build()
+            .client(httpClient).build()
     }
 }
