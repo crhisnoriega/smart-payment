@@ -29,8 +29,7 @@ fun PrimaryButton(
         shape = RoundedCornerShape(4.dp),
         onClick = onClick,
         modifier = modifier
-            .fillMaxWidth()
-            .heightIn(min = 56.dp),
+            .fillMaxWidth(),
         enabled = enabled,
         contentPadding = contentPadding,
         content = content,

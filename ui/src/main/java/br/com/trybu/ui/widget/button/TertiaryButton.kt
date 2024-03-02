@@ -4,6 +4,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ButtonElevation
@@ -24,7 +25,7 @@ fun TertiaryButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    shape: Shape = ButtonDefaults.outlinedShape,
+    shape: Shape = RoundedCornerShape(4.dp),
     colors: ButtonColors = tertiaryButtonColors(),
     elevation: ButtonElevation? = null,
     border: BorderStroke? = BorderStroke(1.dp, gray_300),

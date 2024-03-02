@@ -2,6 +2,7 @@ package br.com.trybu.payment.presentation.screen
 
 import android.text.SpannableStringBuilder
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -26,13 +27,15 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.core.text.HtmlCompat
 import br.com.trybu.payment.data.model.RetrieveOperationsResponse
-import br.com.trybu.payment.util.toAnnotatedString
 import br.com.trybu.payment.presentation.viewmodel.PaymentViewModel
+import br.com.trybu.payment.util.toAnnotatedString
 import br.com.trybu.ui.theme.Annotation1
 import br.com.trybu.ui.theme.Subtitle2
 import br.com.trybu.ui.theme.blue_500
 import br.com.trybu.ui.widget.button.PrimaryButton
+import br.com.trybu.ui.widget.button.TertiaryButton
 import br.com.trybu.ui.widget.card.AppCard
+import br.com.trybu.ui.widget.loading.LoadablePrimaryButton
 
 
 @Composable
@@ -104,10 +107,12 @@ fun OperationCard(
     val spanned = HtmlCompat.fromHtml(spannableString, HtmlCompat.FROM_HTML_MODE_COMPACT)
 
 
-    AppCard(modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.clickable(onClick = {
-            viewModel.doPayment(operation)
-        })) {
+    AppCard(
+        modifier
+            .fillMaxWidth()
+            .padding(4.dp)
+    ) {
+        Column {
             Row(
                 Modifier
                     .padding(top = 32.dp, bottom = 8.dp)
@@ -134,6 +139,31 @@ fun OperationCard(
                     .padding(top = 8.dp, bottom = 24.dp, start = 24.dp, end = 24.dp)
                     .testTag("chave"), text = operation.transactionId ?: "", style = Annotation1
             )
+
+            Row(
+                Modifier
+                    .align(alignment = Alignment.CenterHorizontally)
+                    .padding(vertical = 4.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                TertiaryButton(
+                    onClick = { /*TODO*/ },
+                    modifier = Modifier
+                        .weight(1f, false)
+                        .padding(horizontal = 4.dp)
+                ) {
+                    Text(text = "Cancelar", color = blue_500)
+                }
+                LoadablePrimaryButton(
+                    isLoading = true,
+                    onClick = {
+                        viewModel.doPayment(operation)
+                    }, modifier = Modifier.weight(1f, false)
+                ) {
+                    Text(text = "Pagar")
+                }
+
+            }
         }
     }
 }
