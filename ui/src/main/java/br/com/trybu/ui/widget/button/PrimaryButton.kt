@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Surface
@@ -25,7 +26,7 @@ fun PrimaryButton(
     content: @Composable RowScope.() -> Unit
 ) {
     Button(
-        shape = RectangleShape,
+        shape = RoundedCornerShape(4.dp),
         onClick = onClick,
         modifier = modifier
             .fillMaxWidth()

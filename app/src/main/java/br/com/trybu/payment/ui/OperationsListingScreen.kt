@@ -30,7 +30,7 @@ import br.com.trybu.payment.util.toAnnotatedString
 import br.com.trybu.payment.viewmodel.PaymentViewModel
 import br.com.trybu.ui.theme.Annotation1
 import br.com.trybu.ui.theme.Subtitle2
-import br.com.trybu.ui.theme.orange_500
+import br.com.trybu.ui.theme.blue_500
 import br.com.trybu.ui.widget.button.PrimaryButton
 import br.com.trybu.ui.widget.card.AppCard
 
@@ -116,7 +116,7 @@ fun OperationCard(
                     modifier = Modifier
                         .size(24.dp),
                     imageVector = Icons.Rounded.ShoppingCart,
-                    tint = orange_500,
+                    tint = blue_500,
                     contentDescription = ""
                 )
                 Spacer(modifier = Modifier.width(16.dp))

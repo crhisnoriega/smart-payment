@@ -18,7 +18,7 @@ import br.com.trybu.ui.theme.gray_1000
 @Composable
 fun AppCard(
     modifier: Modifier = Modifier,
-    shape: Shape = RoundedCornerShape(24.dp),
+    shape: Shape = RoundedCornerShape(4.dp),
     colors: CardColors = CardDefaults.outlinedCardColors(
         containerColor = gray_0,
         contentColor = gray_1000,

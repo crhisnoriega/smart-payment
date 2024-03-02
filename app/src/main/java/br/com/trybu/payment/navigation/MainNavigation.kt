@@ -4,7 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import br.com.trybu.payment.ui.InfosScreen
+import br.com.trybu.payment.ui.InformationScreen
 import br.com.trybu.payment.ui.OperationsListingScreen
 import br.com.trybu.payment.viewmodel.PaymentViewModel
 
@@ -19,7 +19,7 @@ fun MainNavigation(
         startDestination = Routes.payment.infos
     ) {
         composable(route = Routes.payment.infos) {
-            InfosScreen(viewModel = paymentViewModel) {
+            InformationScreen(viewModel = paymentViewModel) {
                 controller.navigate("operations")
             }
         }

@@ -1,7 +1,6 @@
 package br.com.trybu.payment.ui
 
 import android.os.Build
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -24,7 +23,7 @@ import br.com.trybu.ui.widget.PrimaryTopBar
 import br.com.trybu.ui.widget.button.PrimaryButton
 
 @Composable
-fun InfosScreen(
+fun InformationScreen(
     viewModel: PaymentViewModel = hiltViewModel(),
     route: (String) -> Unit,
 ) {
@@ -48,17 +47,19 @@ fun InfosScreen(
         )
         {
             Column(
-                modifier = Modifier.weight(1f, false)
+                modifier = Modifier
+                    .weight(1f, false)
+                    .padding(16.dp)
             ) {
                 Spacer(modifier = Modifier.padding(top = 60.dp))
-                Text(text = "SN", style = Title2, color = Color.Black)
+                Text(text = "Numero de Serie", style = Title2, color = Color.Black)
                 Text(text = Build.SERIAL, style = Body1)
             }
 
             PrimaryButton(
                 onClick = { route(Routes.payment.operations) },
                 modifier = Modifier
-                    .padding(horizontal = 20.dp)
+                    .padding(16.dp)
                     .align(alignment = Alignment.End)
             ) {
                 Text(text = "Operações")
