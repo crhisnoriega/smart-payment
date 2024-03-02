@@ -2,6 +2,8 @@ package br.com.trybu.payment.api
 
 import br.com.trybu.payment.data.model.RetrieveKeyRequest
 import br.com.trybu.payment.data.model.RetrieveKeyResponse
+import br.com.trybu.payment.data.model.RetrieveOperationsRequest
+import br.com.trybu.payment.data.model.RetrieveOperationsResponse
 import com.google.gson.JsonElement
 import retrofit2.Response
 import retrofit2.http.Body
@@ -18,5 +20,7 @@ interface SmartPaymentAPI {
 
     @POST("ConsultarTransacoesPOS2")
     @Headers("Content-Type: application/json")
-    suspend fun retrieveOperations(): Response<JsonElement>
+    suspend fun retrieveOperations(
+        @Body retrieveOperationsRequest: RetrieveOperationsRequest
+    ): Response<RetrieveOperationsResponse>
 }

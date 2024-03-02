@@ -1,11 +1,14 @@
 package br.com.trybu.payment.di
 
 
+import android.content.Context
+import android.content.SharedPreferences
 import br.com.trybu.payment.api.SmartPaymentAPI
 import com.google.gson.GsonBuilder
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -25,6 +28,12 @@ object RemoteModule {
     ): SmartPaymentAPI {
         return retrofit.create(SmartPaymentAPI::class.java)
     }
+
+    @Singleton
+    @Provides
+    fun provideLocalStorage(@ApplicationContext context: Context) =
+        context.getSharedPreferences("smart_payment", Context.MODE_PRIVATE)
+
 
     @Singleton
     @Provides

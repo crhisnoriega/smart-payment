@@ -2,6 +2,8 @@ package br.com.trybu.payment.data
 
 import br.com.trybu.payment.api.SmartPaymentAPI
 import br.com.trybu.payment.data.model.RetrieveKeyRequest
+import br.com.trybu.payment.data.model.RetrieveOperationsRequest
+import br.com.trybu.payment.data.model.RetrieveOperationsResponse
 import kotlinx.coroutines.flow.flow
 import javax.inject.Inject
 
@@ -18,5 +20,21 @@ class PaymentRepository @Inject constructor(
                 )
             )
         emit(response.body()?.key)
+    }
+
+    suspend fun retrieveOperations(key: String?, document: String?) = flow {
+        val response = smartPaymentAPI.retrieveOperations(
+            RetrieveOperationsRequest(
+                key = key,
+                textQuery = document
+            )
+        )
+
+        val joined = mutableListOf<RetrieveOperationsResponse.Items.Operation>()
+        response.body()?.items?.forEach {
+            joined.addAll(it.items)
+        }
+
+        emit(joined)
     }
 }
