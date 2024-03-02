@@ -64,6 +64,14 @@ fun TransactionListing(
     viewModel: PaymentViewModel = hiltViewModel()
 ) {
     LazyColumn(modifier = Modifier.fillMaxSize()) {
+
+
+        items(viewModel.operations) {
+            OperationCard(operation = it) {
+
+            }
+        }
+
         item {
             PrimaryButton(onClick = {
                 viewModel.retrieveKey()
@@ -77,12 +85,6 @@ fun TransactionListing(
                 viewModel.retrieveOperations("11111111111")
             }) {
                 Text(text = "ops")
-            }
-        }
-
-        items(viewModel.operations) {
-            OperationCard(operation = it) {
-
             }
         }
     }
