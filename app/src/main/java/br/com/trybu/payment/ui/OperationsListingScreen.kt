@@ -68,12 +68,14 @@ fun OperationsListingScreen(
         )
     }
 
-    LazyColumn(modifier = Modifier.fillMaxSize()) {
-        items(state.operations) {
-            OperationCard(operation = it, viewModel = viewModel)
-        }
+    when {
+        state.isLoading == true -> FullscreenLoading()
+        state.operations.isNotEmpty() -> LazyColumn(modifier = Modifier.fillMaxSize()) {
+            items(state.operations) {
+                OperationCard(operation = it, viewModel = viewModel)
+            }
 
-        if (state.operations.isNotEmpty()) {
+
             item {
                 Column(modifier = Modifier.padding(horizontal = 16.dp)) {
                     PrimaryButton(
@@ -86,8 +88,8 @@ fun OperationsListingScreen(
                     }
                 }
             }
-        }
 
+        }
     }
 }
 

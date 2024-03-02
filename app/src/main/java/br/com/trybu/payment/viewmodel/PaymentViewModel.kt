@@ -46,6 +46,7 @@ class PaymentViewModel @Inject constructor(
     }
 
     fun retrieveOperations(document: String) = viewModelScope.launch {
+        state = state.copy(operations = listOf(), isLoading = true)
         safeAPICall {
             paymentRepository.retrieveOperations(
                 keyRepository.retrieveKey(), document
@@ -54,7 +55,7 @@ class PaymentViewModel @Inject constructor(
             when (it) {
                 is Resources.Success<*> -> {
                     val newOperations = it.data as List<RetrieveOperationsResponse.Items.Operation>
-                    state = state.copy(operations = newOperations)
+                    state = state.copy(operations = newOperations, isLoading = false)
                 }
 
                 is Resources.Error -> state = state.copy(error = it.error.message)
