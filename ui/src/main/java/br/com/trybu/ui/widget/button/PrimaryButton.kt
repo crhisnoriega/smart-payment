@@ -11,6 +11,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import br.com.trybu.ui.theme.AppTheme
@@ -24,6 +25,7 @@ fun PrimaryButton(
     content: @Composable RowScope.() -> Unit
 ) {
     Button(
+        shape = RectangleShape,
         onClick = onClick,
         modifier = modifier
             .fillMaxWidth()

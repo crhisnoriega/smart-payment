@@ -7,6 +7,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import br.com.trybu.payment.api.Resources
+import br.com.trybu.payment.api.safeAPICall
 import br.com.trybu.payment.data.KeyRepository
 import br.com.trybu.payment.data.PaymentRepository
 import br.com.trybu.payment.data.model.RetrieveOperationsResponse
@@ -46,30 +48,44 @@ class PaymentViewModel @Inject constructor(
     }
 
     fun retrieveOperations(document: String) = viewModelScope.launch {
-        paymentRepository.retrieveOperations(keyRepository.retrieveKey(), document)
-            .catch {
+        safeAPICall {
+            paymentRepository.retrieveOperations(
+                keyRepository.retrieveKey(),
+                document
+            )
+        }.collect {
+            when (it) {
+                is Resources.Success<*> -> {
+                    operations = it.data as List<RetrieveOperationsResponse.Items.Operation>
+                }
 
-            }.collect {
-                operations = it ?: listOf()
+                is Resources.Error -> {
+
+                }
+
+                is Resources.Loading -> {
+
+                }
             }
+        }
     }
 
     fun retrieveKey() = viewModelScope.launch {
         paymentRepository.retrieveKey(serialNumber = Build.SERIAL)
             .catch {
             }.collect { key ->
-                Log.i("log", "key: $key")
                 key?.let { keyRepository.persisKey(it) }
             }
     }
 
     fun doPayment(operation: RetrieveOperationsResponse.Items.Operation) =
         CoroutineScope(Dispatchers.IO).launch {
-            Log.i("log", "isAuthenticated: ${plugPag.isAuthenticated()}")
-
             plugPag.setEventListener(object : PlugPagEventListener {
                 override fun onEvent(data: PlugPagEventData) {
-                    Log.i("log", "eventCode: ${data.eventCode} customMessage: ${data.customMessage}")
+                    Log.i(
+                        "log",
+                        "eventCode: ${data.eventCode} customMessage: ${data.customMessage}"
+                    )
                 }
             })
             val result = plugPag.doPayment(
@@ -84,6 +100,7 @@ class PaymentViewModel @Inject constructor(
                     isCarne = false
                 )
             )
+
             Log.i("log", "result: ${result}")
         }
 }

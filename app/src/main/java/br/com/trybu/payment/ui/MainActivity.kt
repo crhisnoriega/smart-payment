@@ -23,11 +23,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.text.HtmlCompat
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.compose.rememberNavController
 import br.com.trybu.payment.data.model.RetrieveOperationsResponse
+import br.com.trybu.payment.navigation.MainNavigation
 import br.com.trybu.payment.util.toAnnotatedString
 import br.com.trybu.payment.viewmodel.PaymentViewModel
 import br.com.trybu.ui.theme.Annotation1
@@ -35,6 +38,8 @@ import br.com.trybu.ui.theme.AppTheme
 import br.com.trybu.ui.theme.Subtitle2
 import br.com.trybu.ui.theme.orange_500
 import br.com.trybu.ui.widget.AppScaffold
+import br.com.trybu.ui.widget.BackButton
+import br.com.trybu.ui.widget.PrimaryTopBar
 import br.com.trybu.ui.widget.button.PrimaryButton
 import br.com.trybu.ui.widget.card.AppCard
 import dagger.hilt.android.AndroidEntryPoint
@@ -44,102 +49,15 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
+            val navController = rememberNavController()
             AppTheme {
-                AppScaffold(modifier = Modifier, topBar = {
 
-                }
-
-                ) {
-                    TransactionListing()
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun TransactionListing(
-    viewModel: PaymentViewModel = hiltViewModel()
-) {
-    LazyColumn(modifier = Modifier.fillMaxSize()) {
-
-
-        items(viewModel.operations) {
-            OperationCard(operation = it) { operation ->
-                viewModel.doPayment(operation)
-            }
-        }
-
-        item {
-            PrimaryButton(onClick = {
-                viewModel.retrieveKey()
-            }) {
-                Text(text = "key")
-            }
-        }
-
-        item {
-            PrimaryButton(onClick = {
-                viewModel.retrieveOperations("11111111111")
-            }) {
-                Text(text = "ops")
-            }
-        }
-    }
-}
-
-@Composable
-fun OperationCard(
-    modifier: Modifier = Modifier,
-    operation: RetrieveOperationsResponse.Items.Operation,
-    onClick: (operation: RetrieveOperationsResponse.Items.Operation) -> Unit
-) {
-
-    val spannableString = SpannableStringBuilder(operation.htmlString).toString()
-    val spanned = HtmlCompat.fromHtml(spannableString, HtmlCompat.FROM_HTML_MODE_COMPACT)
-
-
-    AppCard(modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.clickable(onClick = {
-            onClick.invoke(operation)
-        })) {
-            Row(
-                Modifier
-                    .padding(top = 32.dp, bottom = 8.dp)
-                    .padding(horizontal = 24.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    modifier = Modifier
-                        .size(24.dp)
-                        .testTag("tipo_chave_icone"),
-                    imageVector = Icons.Rounded.ShoppingCart,
-                    tint = orange_500,
-                    contentDescription = ""
+                MainNavigation(
+                    controller = navController, paymentViewModel = hiltViewModel()
                 )
-                Spacer(modifier = Modifier.width(16.dp))
-                Text(
-                    modifier = Modifier.testTag("tipo_chave_nome"),
-                    text = spanned.toAnnotatedString(),
-                    style = Subtitle2
-                )
-                Spacer(modifier = Modifier.weight(1f))
-
             }
-            Text(
-                modifier = Modifier
-                    .padding(top = 8.dp, bottom = 24.dp, start = 24.dp, end = 24.dp)
-                    .testTag("chave"), text = operation.transactionId ?: "", style = Annotation1
-            )
+
         }
     }
 }
 
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    AppTheme {
-        TransactionListing()
-    }
-}
