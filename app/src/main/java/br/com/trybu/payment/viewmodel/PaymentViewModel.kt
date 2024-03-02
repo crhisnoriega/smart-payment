@@ -74,6 +74,7 @@ class PaymentViewModel @Inject constructor(
 
     fun doPayment(operation: RetrieveOperationsResponse.Items.Operation) =
         CoroutineScope(Dispatchers.IO).launch {
+            Log.i("log", "start: ${operation.transactionId}")
             plugPag.setEventListener(object : PlugPagEventListener {
                 override fun onEvent(data: PlugPagEventData) {
                     Log.i(
@@ -99,8 +100,10 @@ class PaymentViewModel @Inject constructor(
                     isCarne = false
                 )
             )
-            result.result
+            Log.i("log", "result: ${result.result}")
             state = state.copy(paymentState = null)
+            plugPag.disposeSubscriber()
+            plugPag.unbindService()
         }
 
     fun dismissError() {

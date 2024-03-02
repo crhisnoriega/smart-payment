@@ -18,10 +18,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
@@ -42,6 +39,10 @@ import br.com.trybu.ui.widget.card.AppCard
 fun OperationsListingScreen(
     viewModel: PaymentViewModel
 ) {
+    LaunchedEffect(Unit) {
+        viewModel.retrieveOperations("11111111111")
+    }
+
     val state = viewModel.state
 
     if (state.error != null) {
@@ -69,26 +70,23 @@ fun OperationsListingScreen(
 
     LazyColumn(modifier = Modifier.fillMaxSize()) {
         items(state.operations) {
-            OperationCard(operation = it) { operation ->
-                viewModel.doPayment(operation)
-            }
+            OperationCard(operation = it, viewModel = viewModel)
         }
 
-        item {
-            Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-                PrimaryButton(onClick = {
-                    viewModel.retrieveKey()
-                }) {
-                    Text(text = "key")
-                }
-                PrimaryButton(onClick = {
-                    viewModel.retrieveOperations("11111111111")
-                }) {
-                    Text(text = "ops")
+        if (state.operations.isNotEmpty()) {
+            item {
+                Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+                    PrimaryButton(
+                        modifier = Modifier.padding(vertical = 16.dp),
+                        onClick = {
+                            viewModel.retrieveOperations("11111111111")
+                        }
+                    ) {
+                        Text(text = "Atualizar")
+                    }
                 }
             }
         }
-
 
     }
 }
@@ -97,7 +95,7 @@ fun OperationsListingScreen(
 fun OperationCard(
     modifier: Modifier = Modifier,
     operation: RetrieveOperationsResponse.Items.Operation,
-    onClick: (operation: RetrieveOperationsResponse.Items.Operation) -> Unit
+    viewModel: PaymentViewModel
 ) {
 
     val spannableString = SpannableStringBuilder(operation.htmlString).toString()
@@ -106,7 +104,7 @@ fun OperationCard(
 
     AppCard(modifier.fillMaxWidth()) {
         Column(modifier = Modifier.clickable(onClick = {
-            onClick.invoke(operation)
+            viewModel.doPayment(operation)
         })) {
             Row(
                 Modifier
@@ -116,15 +114,13 @@ fun OperationCard(
             ) {
                 Icon(
                     modifier = Modifier
-                        .size(24.dp)
-                        .testTag("tipo_chave_icone"),
+                        .size(24.dp),
                     imageVector = Icons.Rounded.ShoppingCart,
                     tint = orange_500,
                     contentDescription = ""
                 )
                 Spacer(modifier = Modifier.width(16.dp))
                 Text(
-                    modifier = Modifier.testTag("tipo_chave_nome"),
                     text = spanned.toAnnotatedString(),
                     style = Subtitle2
                 )
