@@ -1,4 +1,4 @@
-package br.com.trybu.payment.presentation.ui
+package br.com.trybu.payment.presentation
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity

@@ -1,4 +1,4 @@
-package br.com.trybu.payment.presentation.ui
+package br.com.trybu.payment.presentation.screen
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,7 +12,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.tooling.preview.Preview
 
 @Composable
-fun FullscreenLoading(modifier: Modifier = Modifier) {
+fun LoadingFullScreen(modifier: Modifier = Modifier) {
     Surface {
         Box(
             modifier = modifier
@@ -28,7 +28,7 @@ fun FullscreenLoading(modifier: Modifier = Modifier) {
 @Composable
 private fun PreviewFullscreenLoading() {
     Surface(modifier = Modifier.fillMaxSize(), color = Color.White) {
-        FullscreenLoading(
+        LoadingFullScreen(
             modifier = Modifier
         )
     }

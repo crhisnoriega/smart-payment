@@ -4,8 +4,8 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import br.com.trybu.payment.presentation.ui.InformationScreen
-import br.com.trybu.payment.presentation.ui.OperationsListingScreen
+import br.com.trybu.payment.presentation.screen.InformationScreen
+import br.com.trybu.payment.presentation.screen.OperationsListingScreen
 import br.com.trybu.payment.presentation.viewmodel.PaymentViewModel
 
 @Composable

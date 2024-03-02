@@ -1,4 +1,4 @@
-package br.com.trybu.payment.presentation.ui
+package br.com.trybu.payment.presentation.screen
 
 import android.text.SpannableStringBuilder
 import androidx.compose.foundation.clickable
@@ -69,7 +69,7 @@ fun OperationsListingScreen(
     }
 
     when {
-        state.isLoading == true -> FullscreenLoading()
+        state.isLoading == true -> LoadingFullScreen()
         state.operations.isNotEmpty() -> LazyColumn(modifier = Modifier.fillMaxSize()) {
             items(state.operations) {
                 OperationCard(operation = it, viewModel = viewModel)

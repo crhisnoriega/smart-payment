@@ -1,4 +1,4 @@
-package br.com.trybu.payment.presentation.ui
+package br.com.trybu.payment.presentation.screen
 
 import android.os.Build
 import androidx.compose.foundation.layout.Arrangement
