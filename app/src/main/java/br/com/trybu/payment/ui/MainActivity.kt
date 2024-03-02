@@ -51,12 +51,10 @@ class MainActivity : ComponentActivity() {
         setContent {
             val navController = rememberNavController()
             AppTheme {
-
                 MainNavigation(
                     controller = navController, paymentViewModel = hiltViewModel()
                 )
             }
-
         }
     }
 }

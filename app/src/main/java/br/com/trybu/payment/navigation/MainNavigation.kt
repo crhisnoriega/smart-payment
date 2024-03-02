@@ -5,7 +5,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import br.com.trybu.payment.ui.InfosScreen
-import br.com.trybu.payment.ui.OperationsListinScreen
+import br.com.trybu.payment.ui.OperationsListingScreen
 import br.com.trybu.payment.viewmodel.PaymentViewModel
 
 @Composable
@@ -25,7 +25,7 @@ fun MainNavigation(
         }
 
         composable(route = Routes.payment.operations) {
-            OperationsListinScreen(viewModel = paymentViewModel)
+            OperationsListingScreen(viewModel = paymentViewModel)
         }
     }
 }

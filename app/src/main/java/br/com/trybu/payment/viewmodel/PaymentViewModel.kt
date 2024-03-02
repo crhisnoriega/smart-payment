@@ -19,7 +19,6 @@ import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPag
 import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPagEventData
 import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPagEventListener
 import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPagPaymentData
-import br.com.uol.pagseguro.plugpagservice.wrapper.TerminalCapabilities
 import com.google.gson.Gson
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
@@ -36,8 +35,7 @@ class PaymentViewModel @Inject constructor(
     private val plugPag: PlugPag
 ) : ViewModel() {
 
-    var operations by mutableStateOf<List<RetrieveOperationsResponse.Items.Operation>>(listOf())
-
+    var state by mutableStateOf(UIState(operations = listOf()))
 
     init {
         viewModelScope.launch {
@@ -50,18 +48,16 @@ class PaymentViewModel @Inject constructor(
     fun retrieveOperations(document: String) = viewModelScope.launch {
         safeAPICall {
             paymentRepository.retrieveOperations(
-                keyRepository.retrieveKey(),
-                document
+                keyRepository.retrieveKey(), document
             )
         }.collect {
             when (it) {
                 is Resources.Success<*> -> {
-                    operations = it.data as List<RetrieveOperationsResponse.Items.Operation>
+                    val newOperations = it.data as List<RetrieveOperationsResponse.Items.Operation>
+                    state = state.copy(operations = newOperations)
                 }
 
-                is Resources.Error -> {
-
-                }
+                is Resources.Error -> state = state.copy(error = it.error.message)
 
                 is Resources.Loading -> {
 
@@ -71,11 +67,9 @@ class PaymentViewModel @Inject constructor(
     }
 
     fun retrieveKey() = viewModelScope.launch {
-        paymentRepository.retrieveKey(serialNumber = Build.SERIAL)
-            .catch {
-            }.collect { key ->
-                key?.let { keyRepository.persisKey(it) }
-            }
+        paymentRepository.retrieveKey(serialNumber = Build.SERIAL).catch {}.collect { key ->
+            key?.let { keyRepository.persisKey(it) }
+        }
     }
 
     fun doPayment(operation: RetrieveOperationsResponse.Items.Operation) =
@@ -83,9 +77,13 @@ class PaymentViewModel @Inject constructor(
             plugPag.setEventListener(object : PlugPagEventListener {
                 override fun onEvent(data: PlugPagEventData) {
                     Log.i(
-                        "log",
-                        "eventCode: ${data.eventCode} customMessage: ${data.customMessage}"
+                        "log", "eventCode: ${data.eventCode} customMessage: ${data.customMessage}"
                     )
+                    state = when(data.eventCode){
+                        4 -> state.copy(paymentState = null)
+                        else -> state.copy(paymentState = data.customMessage)
+                    }
+
                 }
             })
             val result = plugPag.doPayment(
@@ -101,6 +99,10 @@ class PaymentViewModel @Inject constructor(
                 )
             )
 
-            Log.i("log", "result: ${result}")
+            state = state.copy(paymentState = null)
         }
+
+    fun dismissError() {
+        state = state.copy(error = null, paymentState = null)
+    }
 }
