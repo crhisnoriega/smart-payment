@@ -75,20 +75,21 @@ fun OperationsListingScreen(
         }
 
         item {
-            PrimaryButton(onClick = {
-                viewModel.retrieveKey()
-            }) {
-                Text(text = "key")
+            Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+                PrimaryButton(onClick = {
+                    viewModel.retrieveKey()
+                }) {
+                    Text(text = "key")
+                }
+                PrimaryButton(onClick = {
+                    viewModel.retrieveOperations("11111111111")
+                }) {
+                    Text(text = "ops")
+                }
             }
         }
 
-        item {
-            PrimaryButton(onClick = {
-                viewModel.retrieveOperations("11111111111")
-            }) {
-                Text(text = "ops")
-            }
-        }
+
     }
 }
 

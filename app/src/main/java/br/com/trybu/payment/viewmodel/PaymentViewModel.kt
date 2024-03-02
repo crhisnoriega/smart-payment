@@ -79,8 +79,9 @@ class PaymentViewModel @Inject constructor(
                     Log.i(
                         "log", "eventCode: ${data.eventCode} customMessage: ${data.customMessage}"
                     )
-                    state = when(data.eventCode){
+                    state = when (data.eventCode) {
                         4 -> state.copy(paymentState = null)
+                        18 -> successPayment()
                         else -> state.copy(paymentState = data.customMessage)
                     }
 
@@ -98,11 +99,15 @@ class PaymentViewModel @Inject constructor(
                     isCarne = false
                 )
             )
-
+            result.result
             state = state.copy(paymentState = null)
         }
 
     fun dismissError() {
         state = state.copy(error = null, paymentState = null)
+    }
+
+    private fun successPayment(): UIState {
+        return state
     }
 }
