@@ -88,6 +88,7 @@ dependencies {
 
     implementation(project(":ui"))
 
+    implementation("br.com.uol.pagseguro.plugpagservice.wrapper:wrapper:1.22.0")
 }
 
 kapt {

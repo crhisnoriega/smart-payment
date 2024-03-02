@@ -45,11 +45,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             AppTheme {
-                AppScaffold(
-                    modifier = Modifier,
-                    topBar = {
+                AppScaffold(modifier = Modifier, topBar = {
 
-                    }
+                }
 
                 ) {
                     TransactionListing()
@@ -67,8 +65,8 @@ fun TransactionListing(
 
 
         items(viewModel.operations) {
-            OperationCard(operation = it) {
-
+            OperationCard(operation = it) { operation ->
+                viewModel.doPayment(operation)
             }
         }
 
@@ -94,7 +92,7 @@ fun TransactionListing(
 fun OperationCard(
     modifier: Modifier = Modifier,
     operation: RetrieveOperationsResponse.Items.Operation,
-    onClick: () -> Unit
+    onClick: (operation: RetrieveOperationsResponse.Items.Operation) -> Unit
 ) {
 
     val spannableString = SpannableStringBuilder(operation.htmlString).toString()
@@ -102,7 +100,9 @@ fun OperationCard(
 
 
     AppCard(modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.clickable(onClick = onClick)) {
+        Column(modifier = Modifier.clickable(onClick = {
+            onClick.invoke(operation)
+        })) {
             Row(
                 Modifier
                     .padding(top = 32.dp, bottom = 8.dp)
@@ -129,9 +129,7 @@ fun OperationCard(
             Text(
                 modifier = Modifier
                     .padding(top = 8.dp, bottom = 24.dp, start = 24.dp, end = 24.dp)
-                    .testTag("chave"),
-                text = operation.transactionId ?: "",
-                style = Annotation1
+                    .testTag("chave"), text = operation.transactionId ?: "", style = Annotation1
             )
         }
     }

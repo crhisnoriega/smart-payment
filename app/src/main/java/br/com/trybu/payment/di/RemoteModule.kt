@@ -4,6 +4,7 @@ package br.com.trybu.payment.di
 import android.content.Context
 import android.content.SharedPreferences
 import br.com.trybu.payment.api.SmartPaymentAPI
+import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPag
 import com.google.gson.GsonBuilder
 import dagger.Module
 import dagger.Provides
@@ -34,6 +35,10 @@ object RemoteModule {
     fun provideLocalStorage(@ApplicationContext context: Context) =
         context.getSharedPreferences("smart_payment", Context.MODE_PRIVATE)
 
+
+    @Singleton
+    @Provides
+    fun providePagSeguroPlug(@ApplicationContext context: Context) = PlugPag(context)
 
     @Singleton
     @Provides
