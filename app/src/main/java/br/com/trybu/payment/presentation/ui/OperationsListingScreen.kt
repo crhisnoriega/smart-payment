@@ -1,4 +1,4 @@
-package br.com.trybu.payment.ui
+package br.com.trybu.payment.presentation.ui
 
 import android.text.SpannableStringBuilder
 import androidx.compose.foundation.clickable
@@ -27,7 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.text.HtmlCompat
 import br.com.trybu.payment.data.model.RetrieveOperationsResponse
 import br.com.trybu.payment.util.toAnnotatedString
-import br.com.trybu.payment.viewmodel.PaymentViewModel
+import br.com.trybu.payment.presentation.viewmodel.PaymentViewModel
 import br.com.trybu.ui.theme.Annotation1
 import br.com.trybu.ui.theme.Subtitle2
 import br.com.trybu.ui.theme.blue_500

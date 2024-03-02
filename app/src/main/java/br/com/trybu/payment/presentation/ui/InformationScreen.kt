@@ -1,4 +1,4 @@
-package br.com.trybu.payment.ui
+package br.com.trybu.payment.presentation.ui
 
 import android.os.Build
 import androidx.compose.foundation.layout.Arrangement
@@ -15,7 +15,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.trybu.payment.navigation.Routes
-import br.com.trybu.payment.viewmodel.PaymentViewModel
+import br.com.trybu.payment.presentation.viewmodel.PaymentViewModel
 import br.com.trybu.ui.theme.Body1
 import br.com.trybu.ui.theme.Title2
 import br.com.trybu.ui.widget.AppScaffold

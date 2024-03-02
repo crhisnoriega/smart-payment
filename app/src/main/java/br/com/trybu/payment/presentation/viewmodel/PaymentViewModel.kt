@@ -1,4 +1,4 @@
-package br.com.trybu.payment.viewmodel
+package br.com.trybu.payment.presentation.viewmodel
 
 import android.os.Build
 import android.util.Log
