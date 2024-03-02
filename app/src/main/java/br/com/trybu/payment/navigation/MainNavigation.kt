@@ -16,11 +16,11 @@ fun MainNavigation(
     NavHost(
         navController = controller,
         route = Routes.main,
-        startDestination = Routes.payment.infos
+        startDestination = Routes.payment.information
     ) {
-        composable(route = Routes.payment.infos) {
+        composable(route = Routes.payment.information) {
             InformationScreen(viewModel = paymentViewModel) {
-                controller.navigate("operations")
+                controller.navigate(Routes.payment.operations)
             }
         }
 

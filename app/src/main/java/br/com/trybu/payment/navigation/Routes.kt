@@ -2,10 +2,10 @@ package br.com.trybu.payment.navigation
 
 object Routes {
 
-    val main ="payments"
+    const val main = "payments"
 
     object Payment {
-        const val infos = "infos"
+        const val information = "information"
         const val operations = "operations"
     }
 
