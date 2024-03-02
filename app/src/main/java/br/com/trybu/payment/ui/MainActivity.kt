@@ -1,6 +1,7 @@
 package br.com.trybu.payment.ui
 
 import android.os.Bundle
+import android.text.SpannableStringBuilder
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.clickable
@@ -16,19 +17,18 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ShoppingCart
-import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.text.HtmlCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.trybu.payment.data.model.RetrieveOperationsResponse
+import br.com.trybu.payment.util.toAnnotatedString
 import br.com.trybu.payment.viewmodel.PaymentViewModel
 import br.com.trybu.ui.theme.Annotation1
 import br.com.trybu.ui.theme.AppTheme
@@ -94,6 +94,11 @@ fun OperationCard(
     operation: RetrieveOperationsResponse.Items.Operation,
     onClick: () -> Unit
 ) {
+
+    val spannableString = SpannableStringBuilder(operation.htmlString).toString()
+    val spanned = HtmlCompat.fromHtml(spannableString, HtmlCompat.FROM_HTML_MODE_COMPACT)
+
+
     AppCard(modifier.fillMaxWidth()) {
         Column(modifier = Modifier.clickable(onClick = onClick)) {
             Row(
@@ -113,7 +118,7 @@ fun OperationCard(
                 Spacer(modifier = Modifier.width(16.dp))
                 Text(
                     modifier = Modifier.testTag("tipo_chave_nome"),
-                    text = operation.paymentDate ?: "",
+                    text = spanned.toAnnotatedString(),
                     style = Subtitle2
                 )
                 Spacer(modifier = Modifier.weight(1f))
@@ -129,6 +134,7 @@ fun OperationCard(
         }
     }
 }
+
 
 @Preview(showBackground = true)
 @Composable
