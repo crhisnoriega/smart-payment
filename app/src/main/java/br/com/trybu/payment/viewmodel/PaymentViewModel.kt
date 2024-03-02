@@ -1,5 +1,6 @@
 package br.com.trybu.payment.viewmodel
 
+import android.os.Build
 import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -16,6 +17,8 @@ import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPag
 import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPagEventData
 import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPagEventListener
 import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPagPaymentData
+import br.com.uol.pagseguro.plugpagservice.wrapper.TerminalCapabilities
+import com.google.gson.Gson
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -33,7 +36,6 @@ class PaymentViewModel @Inject constructor(
 
     var operations by mutableStateOf<List<RetrieveOperationsResponse.Items.Operation>>(listOf())
 
-    private val mPlugPag: PlugPag? = null
 
     init {
         viewModelScope.launch {
@@ -53,7 +55,7 @@ class PaymentViewModel @Inject constructor(
     }
 
     fun retrieveKey() = viewModelScope.launch {
-        paymentRepository.retrieveKey(serialNumber = "PBA1238673598")
+        paymentRepository.retrieveKey(serialNumber = Build.SERIAL)
             .catch {
             }.collect { key ->
                 Log.i("log", "key: $key")
@@ -64,6 +66,7 @@ class PaymentViewModel @Inject constructor(
     fun doPayment(operation: RetrieveOperationsResponse.Items.Operation) =
         CoroutineScope(Dispatchers.IO).launch {
             Log.i("log", "isAuthenticated: ${plugPag.isAuthenticated()}")
+
             plugPag.setEventListener(object : PlugPagEventListener {
                 override fun onEvent(data: PlugPagEventData) {
                     Log.i("log", "eventCode: ${data.eventCode} customMessage: ${data.customMessage}")
@@ -77,7 +80,7 @@ class PaymentViewModel @Inject constructor(
                     installments = 1,
                     userReference = USER_REFERENCE,
                     printReceipt = false,
-                    partialPay = true,
+                    partialPay = false,
                     isCarne = false
                 )
             )
