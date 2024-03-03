@@ -38,7 +38,6 @@ import br.com.trybu.ui.widget.button.TertiaryButton
 import br.com.trybu.ui.widget.card.AppCard
 import br.com.trybu.ui.widget.loading.LoadablePrimaryButton
 
-
 @Composable
 fun OperationsListingScreen(
     viewModel: PaymentViewModel
@@ -117,7 +116,7 @@ fun OperationCard(
                     .padding(horizontal = 24.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                if (operation.isHeader == true) {
+                if (operation.isHeader == false) {
                     Icon(
                         modifier = Modifier.size(24.dp),
                         imageVector = Icons.Rounded.ShoppingCart,

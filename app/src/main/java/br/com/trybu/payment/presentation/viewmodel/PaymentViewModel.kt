@@ -58,7 +58,8 @@ class PaymentViewModel @Inject constructor(
                     state = state.copy(operations = newOperations, isLoading = false)
                 }
 
-                is Resources.Error -> state = state.copy(error = it.error.message)
+                is Resources.Error -> state =
+                    state.copy(error = it.error.message, currentTransactionId = null)
 
                 is Resources.Loading -> {
 
