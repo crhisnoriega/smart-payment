@@ -32,6 +32,10 @@ class PaymentRepository @Inject constructor(
 
         val joined = mutableListOf<RetrieveOperationsResponse.Items.Operation>()
         response.body()?.items?.forEach {
+            joined.add(RetrieveOperationsResponse.Items.Operation(
+                htmlString = it.htmlString,
+                isHeader = true
+            ))
             joined.addAll(it.items)
         }
 

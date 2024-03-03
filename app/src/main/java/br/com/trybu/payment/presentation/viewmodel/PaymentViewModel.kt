@@ -67,13 +67,17 @@ class PaymentViewModel @Inject constructor(
         }
     }
 
-    fun retrieveKey() = viewModelScope.launch {
-        paymentRepository.retrieveKey(serialNumber = Build.SERIAL).catch {}.collect { key ->
-            key?.let { keyRepository.persisKey(it) }
-        }
+    private fun retrieveKey() = viewModelScope.launch {
+        paymentRepository.retrieveKey(serialNumber = "PBA1238673598").catch {}
+            .collect { key ->
+                key?.let { keyRepository.persisKey(it) }
+            }
     }
 
-    fun doPayment(operation: RetrieveOperationsResponse.Items.Operation) =
+    fun doPayment(operation: RetrieveOperationsResponse.Items.Operation) {
+        if (state.currentTransactionId != null) return
+        state = state.copy(currentTransactionId = operation.transactionId)
+
         CoroutineScope(Dispatchers.IO).launch {
             Log.i("log", "start: ${operation.transactionId}")
             plugPag.setEventListener(object : PlugPagEventListener {
@@ -102,10 +106,11 @@ class PaymentViewModel @Inject constructor(
                 )
             )
             Log.i("log", "result: ${result.result}")
-            state = state.copy(paymentState = null)
+            state = state.copy(paymentState = null, currentTransactionId = null)
             plugPag.disposeSubscriber()
             plugPag.unbindService()
         }
+    }
 
     fun dismissError() {
         state = state.copy(error = null, paymentState = null)

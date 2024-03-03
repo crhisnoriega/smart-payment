@@ -11,15 +11,17 @@ data class RetrieveOperationsResponse(
     data class Items(
         @SerializedName("Cancalamento") val isCancel: Boolean?,
         @SerializedName("Cobranca") val isPayment: Boolean?,
+        @SerializedName("Html") val htmlString: String?,
         @SerializedName("Itens") val items: List<Operation>
     ) {
         data class Operation(
-            @SerializedName("DataPagamento") val paymentDate: String?,
-            @SerializedName("Html") val htmlString: String?,
-            @SerializedName("Parcelas") val installmentsNumber: Int?,
-            @SerializedName("TipoPagamento") val paymentType: Int?,
-            @SerializedName("TransacaoID") val transactionId: String?,
-            @SerializedName("Valor") val value: BigDecimal?,
+            @SerializedName("DataPagamento") val paymentDate: String? = null,
+            @SerializedName("Html") val htmlString: String? = null,
+            @SerializedName("Parcelas") val installmentsNumber: Int? = null,
+            @SerializedName("TipoPagamento") val paymentType: Int? = null,
+            @SerializedName("TransacaoID") val transactionId: String? = null,
+            @SerializedName("Valor") val value: BigDecimal? = null,
+            val isHeader: Boolean? = false
         )
     }
 }

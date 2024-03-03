@@ -4,6 +4,7 @@ import android.text.SpannableStringBuilder
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -49,26 +50,20 @@ fun OperationsListingScreen(
     val state = viewModel.state
 
     if (state.error != null) {
-        AlertDialog(
-            text = { Text(text = state.error) },
-            onDismissRequest = { },
-            confirmButton = {
-                PrimaryButton(onClick = { viewModel.dismissError() }) {
-                    Text(text = "Confirmar")
-                }
+        AlertDialog(text = { Text(text = state.error) }, onDismissRequest = { }, confirmButton = {
+            PrimaryButton(onClick = { viewModel.dismissError() }) {
+                Text(text = "Confirmar")
             }
-        )
+        })
     }
 
     if (state.paymentState != null) {
-        AlertDialog(
-            shape = RectangleShape,
+        AlertDialog(shape = RectangleShape,
             text = { Text(text = state.paymentState) },
             onDismissRequest = { },
             confirmButton = {
 
-            }
-        )
+            })
     }
 
     when {
@@ -81,12 +76,9 @@ fun OperationsListingScreen(
 
             item {
                 Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-                    PrimaryButton(
-                        modifier = Modifier.padding(vertical = 16.dp),
-                        onClick = {
-                            viewModel.retrieveOperations("11111111111")
-                        }
-                    ) {
+                    PrimaryButton(modifier = Modifier.padding(vertical = 16.dp), onClick = {
+                        viewModel.retrieveOperations("11111111111")
+                    }) {
                         Text(text = "Atualizar")
                     }
                 }
@@ -105,64 +97,64 @@ fun OperationCard(
 
     val spannableString = SpannableStringBuilder(operation.htmlString).toString()
     val spanned = HtmlCompat.fromHtml(spannableString, HtmlCompat.FROM_HTML_MODE_COMPACT)
+    val state = viewModel.state
 
 
+    val padding = if (operation.isHeader == true) {
+        PaddingValues(top = 8.dp, start = 4.dp, end = 4.dp, bottom = 0.dp)
+    } else {
+        PaddingValues(horizontal = 4.dp)
+    }
     AppCard(
         modifier
             .fillMaxWidth()
-            .padding(4.dp)
+            .padding(padding)
     ) {
-        Column {
+        Column(modifier = Modifier.fillMaxWidth()) {
             Row(
                 Modifier
                     .padding(top = 32.dp, bottom = 8.dp)
                     .padding(horizontal = 24.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    modifier = Modifier
-                        .size(24.dp),
-                    imageVector = Icons.Rounded.ShoppingCart,
-                    tint = blue_500,
-                    contentDescription = ""
-                )
-                Spacer(modifier = Modifier.width(16.dp))
+                if (operation.isHeader == true) {
+                    Icon(
+                        modifier = Modifier.size(24.dp),
+                        imageVector = Icons.Rounded.ShoppingCart,
+                        tint = blue_500,
+                        contentDescription = ""
+                    )
+                    Spacer(modifier = Modifier.width(16.dp))
+                }
+
                 Text(
-                    text = spanned.toAnnotatedString(),
-                    style = Subtitle2
+                    text = spanned.toAnnotatedString(), style = Subtitle2
                 )
-                Spacer(modifier = Modifier.weight(1f))
-
             }
-            Text(
-                modifier = Modifier
-                    .padding(top = 8.dp, bottom = 24.dp, start = 24.dp, end = 24.dp)
-                    .testTag("chave"), text = operation.transactionId ?: "", style = Annotation1
-            )
-
-            Row(
-                Modifier
-                    .align(alignment = Alignment.CenterHorizontally)
-                    .padding(vertical = 4.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                TertiaryButton(
-                    onClick = { /*TODO*/ },
+            if (operation.isHeader == false) {
+                Row(
                     modifier = Modifier
-                        .weight(1f, false)
-                        .padding(horizontal = 4.dp)
+                        .align(alignment = Alignment.CenterHorizontally)
+                        .padding(vertical = 4.dp)
                 ) {
-                    Text(text = "Cancelar", color = blue_500)
-                }
-                LoadablePrimaryButton(
-                    isLoading = true,
-                    onClick = {
-                        viewModel.doPayment(operation)
-                    }, modifier = Modifier.weight(1f, false)
-                ) {
-                    Text(text = "Pagar")
-                }
+                    TertiaryButton(
+                        onClick = { /*TODO*/ },
+                        modifier = Modifier
+                            .weight(1f, false)
+                            .padding(horizontal = 4.dp)
+                    ) {
+                        Text(text = "Cancelar", color = blue_500)
+                    }
+                    LoadablePrimaryButton(
+                        isLoading = state.currentTransactionId == operation.transactionId,
+                        onClick = {
+                            viewModel.doPayment(operation)
+                        }, modifier = Modifier.weight(1f, false)
+                    ) {
+                        Text(text = "Pagar")
+                    }
 
+                }
             }
         }
     }

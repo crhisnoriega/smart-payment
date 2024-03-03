@@ -6,5 +6,6 @@ data class UIState(
     val operations: List<RetrieveOperationsResponse.Items.Operation>,
     val error: String? = null,
     val paymentState: String? = null,
-    val isLoading: Boolean? = false
+    val isLoading: Boolean? = false,
+    val currentTransactionId: String? = null
 )
