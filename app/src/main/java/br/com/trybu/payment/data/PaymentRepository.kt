@@ -19,7 +19,7 @@ class PaymentRepository @Inject constructor(
                     secret = "093nmaASDF1223jkjmmdsSDS#3238ujoklasdkljoiu33000---23lkmls,dmf"
                 )
             )
-        emit(response.body()?.key)
+        emit(response.body())
     }
 
     suspend fun retrieveOperations(key: String?, document: String?) = flow {

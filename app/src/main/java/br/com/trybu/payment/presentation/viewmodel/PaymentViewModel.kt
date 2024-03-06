@@ -1,6 +1,8 @@
 package br.com.trybu.payment.presentation.viewmodel
 
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -19,6 +21,7 @@ import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPag
 import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPagEventData
 import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPagEventListener
 import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPagPaymentData
+import br.com.uol.pagseguro.plugpagservice.wrapper.data.request.PlugPagBeepData
 import com.google.gson.Gson
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
@@ -37,13 +40,6 @@ class PaymentViewModel @Inject constructor(
 
     var state by mutableStateOf(UIState(operations = listOf()))
 
-    init {
-        viewModelScope.launch {
-            if (keyRepository.retrieveKey().isNullOrBlank()) {
-                retrieveKey()
-            }
-        }
-    }
 
     fun retrieveOperations(document: String) = viewModelScope.launch {
         state = state.copy(operations = listOf(), isLoading = true)
@@ -68,10 +64,15 @@ class PaymentViewModel @Inject constructor(
         }
     }
 
-    private fun retrieveKey() = viewModelScope.launch {
+    fun retrieveKey() = viewModelScope.launch {
         paymentRepository.retrieveKey(serialNumber = "PBA1238673598").catch {}
-            .collect { key ->
-                key?.let { keyRepository.persisKey(it) }
+            .collect { establishment ->
+                establishment?.key?.let { keyRepository.persisKey(it) }
+                state = state.copy(
+                    wasInitialized = true,
+                    establishmentName = establishment?.establismentName,
+                    establishmentDocument = establishment?.document,
+                )
             }
     }
 
@@ -81,14 +82,31 @@ class PaymentViewModel @Inject constructor(
 
         CoroutineScope(Dispatchers.IO).launch {
             Log.i("log", "start: ${operation.transactionId}")
+
+            plugPag.beep(PlugPagBeepData(PlugPagBeepData.FREQUENCE_LEVEL_0, 1))
             plugPag.setEventListener(object : PlugPagEventListener {
                 override fun onEvent(data: PlugPagEventData) {
                     Log.i(
                         "log", "eventCode: ${data.eventCode} customMessage: ${data.customMessage}"
                     )
                     state = when (data.eventCode) {
-                        4 -> state.copy(paymentState = null)
-                        18 -> successPayment()
+                        4 -> {
+                            plugPag.setEventListener(object : PlugPagEventListener {
+                                override fun onEvent(data: PlugPagEventData) {
+
+                                }
+                            })
+                            state.copy(paymentState = null)
+                        }
+
+                        18 -> {
+                            plugPag.setEventListener(object : PlugPagEventListener {
+                                override fun onEvent(data: PlugPagEventData) {
+                                }
+                            })
+                            successPayment()
+                        }
+
                         else -> state.copy(paymentState = data.customMessage)
                     }
 
@@ -106,8 +124,24 @@ class PaymentViewModel @Inject constructor(
                     isCarne = false
                 )
             )
-            Log.i("log", "result: ${result.result}")
-            state = state.copy(paymentState = null, currentTransactionId = null)
+
+            if (result.result != 0) {
+                state = state.copy(
+                    paymentState = result.message,
+                    currentTransactionId = null
+                )
+
+                Handler(Looper.getMainLooper()).postDelayed({
+                    state = state.copy(
+                        paymentState = null,
+                        currentTransactionId = null
+                    )
+                }, 5000)
+            } else {
+                state =
+                    state.copy(paymentState = "Transação aprovada®", currentTransactionId = null)
+            }
+
             plugPag.disposeSubscriber()
             plugPag.unbindService()
         }
@@ -119,5 +153,9 @@ class PaymentViewModel @Inject constructor(
 
     private fun successPayment(): UIState {
         return state
+    }
+
+    fun initialized() {
+        state = state.copy(wasInitialized = false)
     }
 }

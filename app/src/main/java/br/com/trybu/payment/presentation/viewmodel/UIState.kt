@@ -7,5 +7,8 @@ data class UIState(
     val error: String? = null,
     val paymentState: String? = null,
     val isLoading: Boolean? = false,
-    val currentTransactionId: String? = null
+    val currentTransactionId: String? = null,
+    val wasInitialized: Boolean = false,
+    val establishmentName: String? = null,
+    val establishmentDocument: String? = null,
 )

@@ -5,6 +5,7 @@ object Routes {
     const val main = "payments"
 
     object Payment {
+        const val initialize = "initialize"
         const val information = "information"
         const val operations = "operations"
     }
