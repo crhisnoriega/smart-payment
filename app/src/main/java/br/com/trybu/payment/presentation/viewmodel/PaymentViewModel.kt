@@ -1,6 +1,5 @@
 package br.com.trybu.payment.presentation.viewmodel
 
-import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
@@ -18,11 +17,11 @@ import br.com.trybu.payment.util.PaymentConstants.INSTALLMENT_TYPE_A_VISTA
 import br.com.trybu.payment.util.PaymentConstants.TYPE_CREDITO
 import br.com.trybu.payment.util.PaymentConstants.USER_REFERENCE
 import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPag
+import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPagCustomPrinterLayout
 import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPagEventData
 import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPagEventListener
 import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPagPaymentData
 import br.com.uol.pagseguro.plugpagservice.wrapper.data.request.PlugPagBeepData
-import com.google.gson.Gson
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -30,6 +29,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import java.math.BigDecimal
 import javax.inject.Inject
+
 
 @HiltViewModel
 class PaymentViewModel @Inject constructor(
@@ -39,8 +39,7 @@ class PaymentViewModel @Inject constructor(
 ) : ViewModel() {
 
     var state by mutableStateOf(UIState(operations = listOf()))
-
-
+    private var transactionFinished = false
     fun retrieveOperations(document: String) = viewModelScope.launch {
         state = state.copy(operations = listOf(), isLoading = true)
         safeAPICall {
@@ -76,9 +75,20 @@ class PaymentViewModel @Inject constructor(
             }
     }
 
+    private fun getCustomPrinterDialog(): PlugPagCustomPrinterLayout {
+        val customDialog = PlugPagCustomPrinterLayout()
+        customDialog.title = "Imprissão de comprovante"
+        customDialog.maxTimeShowPopup = 60
+        customDialog.buttonBackgroundColor = "#1462A6"
+        customDialog.buttonBackgroundColorDisabled = "#8F8F8F"
+        return customDialog
+    }
+
+
     fun doPayment(operation: RetrieveOperationsResponse.Items.Operation) {
         if (state.currentTransactionId != null) return
         state = state.copy(currentTransactionId = operation.transactionId)
+        transactionFinished = false
 
         CoroutineScope(Dispatchers.IO).launch {
             Log.i("log", "start: ${operation.transactionId}")
@@ -89,29 +99,19 @@ class PaymentViewModel @Inject constructor(
                     Log.i(
                         "log", "eventCode: ${data.eventCode} customMessage: ${data.customMessage}"
                     )
+                    if (transactionFinished == true) return
                     state = when (data.eventCode) {
                         4 -> {
-                            plugPag.setEventListener(object : PlugPagEventListener {
-                                override fun onEvent(data: PlugPagEventData) {
-
-                                }
-                            })
+                            transactionFinished = true
                             state.copy(paymentState = null)
                         }
-
-                        18 -> {
-                            plugPag.setEventListener(object : PlugPagEventListener {
-                                override fun onEvent(data: PlugPagEventData) {
-                                }
-                            })
-                            successPayment()
-                        }
-
+                        18 -> successPayment()
                         else -> state.copy(paymentState = data.customMessage)
                     }
 
                 }
             })
+            plugPag.setPlugPagCustomPrinterLayout(getCustomPrinterDialog())
             val result = plugPag.doPayment(
                 PlugPagPaymentData(
                     type = TYPE_CREDITO,
@@ -130,17 +130,17 @@ class PaymentViewModel @Inject constructor(
                     paymentState = result.message,
                     currentTransactionId = null
                 )
-
-                Handler(Looper.getMainLooper()).postDelayed({
-                    state = state.copy(
-                        paymentState = null,
-                        currentTransactionId = null
-                    )
-                }, 5000)
             } else {
                 state =
-                    state.copy(paymentState = "Transação aprovada®", currentTransactionId = null)
+                    state.copy(paymentState = "Transação aprovada", currentTransactionId = null)
             }
+
+            Handler(Looper.getMainLooper()).postDelayed({
+                state = state.copy(
+                    paymentState = null,
+                    currentTransactionId = null
+                )
+            }, 3000)
 
             plugPag.disposeSubscriber()
             plugPag.unbindService()
