@@ -77,7 +77,7 @@ class PaymentViewModel @Inject constructor(
 
     private fun getCustomPrinterDialog(): PlugPagCustomPrinterLayout {
         val customDialog = PlugPagCustomPrinterLayout()
-        customDialog.title = "Imprissão de comprovante"
+        customDialog.title = "Impressão de comprovante"
         customDialog.maxTimeShowPopup = 60
         customDialog.buttonBackgroundColor = "#1462A6"
         customDialog.buttonBackgroundColorDisabled = "#8F8F8F"
@@ -125,14 +125,13 @@ class PaymentViewModel @Inject constructor(
                 )
             )
 
-            if (result.result != 0) {
-                state = state.copy(
+            state = if (result.result != 0) {
+                state.copy(
                     paymentState = result.message,
                     currentTransactionId = null
                 )
             } else {
-                state =
-                    state.copy(paymentState = "Transação aprovada", currentTransactionId = null)
+                state.copy(paymentState = "Transação aprovada", currentTransactionId = null)
             }
 
             Handler(Looper.getMainLooper()).postDelayed({
