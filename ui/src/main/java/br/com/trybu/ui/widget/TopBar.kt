@@ -25,12 +25,7 @@ fun PrimaryTopBar(
 ) {
     CenterAlignedTopAppBar(
         modifier = modifier,
-        title = {
-            ProvideTextStyle(
-                value = Subtitle2,
-                content = title
-            )
-        },
+        title = title,
         navigationIcon = navIcon,
         actions = actions,
         colors = topBarColors()

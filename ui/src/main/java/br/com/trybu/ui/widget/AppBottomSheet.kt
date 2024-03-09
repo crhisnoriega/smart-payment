@@ -2,6 +2,7 @@ package br.com.trybu.ui.widget
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.Surface
@@ -57,6 +59,30 @@ fun AppBottomSheet(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AppBottomSheet(
+    painter: Painter,
+    title: String,
+    onDismiss: () -> Unit,
+    state: SheetState = rememberModalBottomSheetState(),
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    ModalBottomSheet(
+        sheetState = state,
+        onDismissRequest = onDismiss,
+        dragHandle = {},
+        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
+    ) {
+        AppBottomSheetContent(
+            painter = painter,
+            title = title,
+            onDismiss = onDismiss,
+            content = content
+        )
+    }
+}
+
 @Composable
 fun AppBottomSheetContent(
     painter: Painter,
@@ -91,7 +117,7 @@ fun AppBottomSheetContent(
             style = Body2,
             text = message
         )
-        Divider()
+        HorizontalDivider()
         PrimaryButton(
             modifier = Modifier.padding(all = 24.dp),
             onClick = onClickAction
@@ -99,6 +125,37 @@ fun AppBottomSheetContent(
             Text(text = actionLabel)
         }
         Spacer(modifier = Modifier.height(24.dp))
+    }
+}
+
+@Composable
+fun AppBottomSheetContent(
+    painter: Painter,
+    title: String,
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    Column(modifier) {
+        Spacer(modifier = Modifier.height(16.dp))
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp),
+            horizontalArrangement = Arrangement.End
+        ) {
+            CloseButton(onClose = onDismiss)
+        }
+        PrimaryIconContainer(
+            modifier = Modifier.padding(horizontal = 24.dp),
+            painter = painter
+        )
+        Text(
+            modifier = Modifier.padding(top = 24.dp, start = 24.dp, end = 24.dp),
+            style = Subtitle2,
+            text = title
+        )
+        content()
     }
 }
 

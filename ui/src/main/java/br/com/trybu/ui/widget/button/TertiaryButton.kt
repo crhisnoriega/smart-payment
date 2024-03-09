@@ -25,7 +25,7 @@ fun TertiaryButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    shape: Shape = RoundedCornerShape(4.dp),
+    shape: Shape = ButtonDefaults.outlinedShape,
     colors: ButtonColors = tertiaryButtonColors(),
     elevation: ButtonElevation? = null,
     border: BorderStroke? = BorderStroke(1.dp, gray_300),

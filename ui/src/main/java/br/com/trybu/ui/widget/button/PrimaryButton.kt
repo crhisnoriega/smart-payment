@@ -26,7 +26,6 @@ fun PrimaryButton(
     content: @Composable RowScope.() -> Unit
 ) {
     Button(
-        shape = RoundedCornerShape(4.dp),
         onClick = onClick,
         modifier = modifier
             .fillMaxWidth(),

@@ -89,6 +89,7 @@ dependencies {
     implementation(project(":ui"))
 
     implementation("br.com.uol.pagseguro.plugpagservice.wrapper:wrapper:1.22.0")
+    implementation("com.journeyapps:zxing-android-embedded:4.1.0")
 }
 
 kapt {

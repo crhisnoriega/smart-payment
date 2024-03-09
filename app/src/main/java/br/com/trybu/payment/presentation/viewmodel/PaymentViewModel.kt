@@ -1,11 +1,13 @@
 package br.com.trybu.payment.presentation.viewmodel
 
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import br.com.trybu.payment.api.Resources
@@ -38,6 +40,7 @@ class PaymentViewModel @Inject constructor(
     private val plugPag: PlugPag
 ) : ViewModel() {
 
+    var uiState = MutableLiveData<String>()
     var state by mutableStateOf(UIState(operations = listOf()))
     private var transactionFinished = false
     fun retrieveOperations(document: String) = viewModelScope.launch {
@@ -71,6 +74,7 @@ class PaymentViewModel @Inject constructor(
                     wasInitialized = true,
                     establishmentName = establishment?.establismentName,
                     establishmentDocument = establishment?.document,
+                    serialNumber = "PBA1238673598"
                 )
             }
     }
@@ -105,6 +109,7 @@ class PaymentViewModel @Inject constructor(
                             transactionFinished = true
                             state.copy(paymentState = null)
                         }
+
                         18 -> successPayment()
                         else -> state.copy(paymentState = data.customMessage)
                     }
@@ -156,5 +161,9 @@ class PaymentViewModel @Inject constructor(
 
     fun initialized() {
         state = state.copy(wasInitialized = false)
+    }
+
+    fun openCamera() {
+        uiState.value = ""
     }
 }
