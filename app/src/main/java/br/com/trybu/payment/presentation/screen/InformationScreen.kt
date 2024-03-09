@@ -54,7 +54,6 @@ fun InformationScreen(
 ) {
 
     val bottomSheet = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    var showBottomSheet by remember { mutableStateOf(true) }
     val state = viewModel.state
 
 
@@ -63,10 +62,7 @@ fun InformationScreen(
         topBar = {
             PrimaryTopBar(
                 title = {
-                    Text(
-                        modifier = Modifier.testTag("titulo_tela"),
-                        text = "Pagamentos"
-                    )
+                    Text(text = "Pagamentos")
                 }
             )
         }
@@ -76,11 +72,11 @@ fun InformationScreen(
             goToOps = { route(Routes.payment.operations) }
         )
 
-        if (showBottomSheet) {
+        if (state.showInfo) {
             AppBottomSheet(
                 painter = painterResource(id = br.com.trybu.payment.ui.R.drawable.baseline_store_24),
                 title = "Dados do estabelecimento",
-                onDismiss = { showBottomSheet = false },
+                onDismiss = { viewModel.hideInfo()},
                 state = bottomSheet
             ) {
                 Column(modifier = Modifier.padding(horizontal = 24.dp)) {

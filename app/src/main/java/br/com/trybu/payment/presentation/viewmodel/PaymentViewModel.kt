@@ -7,6 +7,7 @@ import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.core.os.postDelayed
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -74,8 +75,13 @@ class PaymentViewModel @Inject constructor(
                     wasInitialized = true,
                     establishmentName = establishment?.establismentName,
                     establishmentDocument = establishment?.document,
-                    serialNumber = "PBA1238673598"
+                    serialNumber = "PBA1238673598",
+                    showInfo = true
                 )
+
+                Handler(Looper.getMainLooper()).postDelayed({
+                    state = state.copy(showInfo = false)
+                }, 5000)
             }
     }
 
@@ -165,5 +171,9 @@ class PaymentViewModel @Inject constructor(
 
     fun openCamera() {
         uiState.value = ""
+    }
+
+    fun hideInfo() {
+        state = state.copy(showInfo = false)
     }
 }

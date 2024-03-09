@@ -11,5 +11,6 @@ data class UIState(
     val wasInitialized: Boolean = false,
     val establishmentName: String? = null,
     val establishmentDocument: String? = null,
-    val serialNumber: String? = null
+    val serialNumber: String? = null,
+    val showInfo: Boolean = false,
 )
