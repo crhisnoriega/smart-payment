@@ -35,12 +35,13 @@ class MainActivity : ComponentActivity() {
         }
 
         viewModel.uiState.observe(this) {
-            val scanner = IntentIntegrator(this)
-            scanner.setDesiredBarcodeFormats(IntentIntegrator.QR_CODE)
-            scanner.setBeepEnabled(false)
-            scanner.setPrompt("Scanning Code");
-            scanner.initiateScan()
-
+            if (it == "qrcode") {
+                val scanner = IntentIntegrator(this)
+                scanner.setDesiredBarcodeFormats(IntentIntegrator.QR_CODE)
+                scanner.setBeepEnabled(false)
+                scanner.setPrompt("Scanning Code");
+                scanner.initiateScan()
+            }
         }
 
     }
@@ -56,6 +57,7 @@ class MainActivity : ComponentActivity() {
             } else {
                 Toast.makeText(this, "Scanned: " + result.contents, Toast.LENGTH_LONG)
                     .show()
+                viewModel.qrCode(result.contents)
             }
         }
     }

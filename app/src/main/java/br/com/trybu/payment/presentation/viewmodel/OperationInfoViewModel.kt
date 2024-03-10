@@ -41,7 +41,8 @@ class OperationInfoViewModel @Inject constructor(
 
     var uiState = MutableLiveData<String>()
     var state by mutableStateOf(UIState(operations = listOf()))
-    private var transactionFinished = false
+
+
     fun retrieveOperations(document: String) = viewModelScope.launch {
         state = state.copy(operations = listOf(), isLoading = true)
         safeAPICall {
@@ -53,6 +54,7 @@ class OperationInfoViewModel @Inject constructor(
                 is Resources.Success<*> -> {
                     val newOperations = it.data as List<RetrieveOperationsResponse.Operation>
                     state = state.copy(operations = newOperations, isLoading = false)
+
                 }
 
                 is Resources.Error -> state =
@@ -62,6 +64,8 @@ class OperationInfoViewModel @Inject constructor(
 
                 }
             }
+
+            uiState.value = ""
         }
     }
 
@@ -106,10 +110,14 @@ class OperationInfoViewModel @Inject constructor(
     }
 
     fun openCamera() {
-        uiState.value = ""
+        uiState.value = "qrcode"
     }
 
     fun hideInfo() {
         state = state.copy(showInfo = false)
+    }
+
+    fun qrCode(contents: String) {
+        uiState.value = contents
     }
 }

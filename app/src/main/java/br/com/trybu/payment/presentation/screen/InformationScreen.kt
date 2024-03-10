@@ -17,6 +17,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -50,14 +53,22 @@ fun InformationScreen(
 
     val bottomSheet = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val state = viewModel.state
+    val uiState by viewModel.uiState.observeAsState()
 
+    LaunchedEffect(uiState) {
+        if (uiState?.startsWith("http") == true) {
+            route(Routes.payment.operations)
+        }
+    }
 
     AppScaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
-            Column(modifier = Modifier
-                .fillMaxWidth()
-                .background(color = blue_500)) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(color = blue_500)
+            ) {
                 Image(
                     modifier = Modifier.padding(horizontal = 120.dp),
                     painter = painterResource(id = R.drawable.logo_elosgate),

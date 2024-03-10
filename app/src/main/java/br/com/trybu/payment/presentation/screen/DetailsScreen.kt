@@ -9,27 +9,23 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import br.com.trybu.payment.R
 import br.com.trybu.payment.data.model.RetrieveOperationsResponse
 import br.com.trybu.payment.presentation.viewmodel.PaymentViewModel
 import br.com.trybu.payment.util.toAnnotatedString
 import br.com.trybu.payment.util.toPaymentType
-import br.com.trybu.ui.theme.Body2
-import br.com.trybu.ui.theme.Title1
 import br.com.trybu.ui.theme.Title2
 import br.com.trybu.ui.theme.blue_500
 import br.com.trybu.ui.widget.AppScaffold
-import br.com.trybu.ui.widget.button.PrimaryButton
 import br.com.trybu.ui.widget.loading.LoadablePrimaryButton
 
 @Composable
@@ -39,23 +35,6 @@ fun DetailsScreen(
 ) {
 
     val state = viewModel.state
-
-    if (state.error != null) {
-        AlertDialog(text = { Text(text = state.error) }, onDismissRequest = { }, confirmButton = {
-            PrimaryButton(onClick = { viewModel.dismissError() }) {
-                Text(text = "Confirmar")
-            }
-        })
-    }
-
-    if (state.paymentState != null) {
-        AlertDialog(shape = RectangleShape,
-            text = { Text(text = state.paymentState) },
-            onDismissRequest = { },
-            confirmButton = {
-
-            })
-    }
 
     AppScaffold(
         modifier = Modifier.fillMaxSize(),
@@ -87,7 +66,8 @@ fun DetailsScreen(
             }
 
             Text(
-                text = state.paymentState ?: "Operation",
+                text = state.paymentState ?: "",
+                textAlign = TextAlign.Center,
                 style = Title2,
                 modifier = Modifier
                     .align(alignment = Alignment.CenterHorizontally)
