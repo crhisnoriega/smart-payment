@@ -15,6 +15,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.core.text.HtmlCompat
 
+fun Int?.toPaymentType() = when(this){
+    2 -> "Credito Parcelado - "
+    3 -> "Credito - "
+    4 -> "Debito - "
+    else -> "Debito - "
+}
 
 fun String?.toAnnotatedString(): AnnotatedString = buildAnnotatedString {
 

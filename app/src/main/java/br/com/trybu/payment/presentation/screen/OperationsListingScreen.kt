@@ -55,22 +55,6 @@ fun OperationsListingScreen(
 
     val state = viewModel.state
 
-    if (state.error != null) {
-        AlertDialog(text = { Text(text = state.error) }, onDismissRequest = { }, confirmButton = {
-            PrimaryButton(onClick = { viewModel.dismissError() }) {
-                Text(text = "Confirmar")
-            }
-        })
-    }
-
-    if (state.paymentState != null) {
-        AlertDialog(shape = RectangleShape,
-            text = { Text(text = state.paymentState) },
-            onDismissRequest = { },
-            confirmButton = {
-
-            })
-    }
 
     AppScaffold(
         modifier = Modifier.fillMaxSize(),

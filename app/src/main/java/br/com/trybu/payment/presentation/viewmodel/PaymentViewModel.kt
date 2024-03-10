@@ -102,6 +102,10 @@ class PaymentViewModel @Inject constructor(
         }
     }
 
+    fun dismissError() {
+        state = state.copy(error = null, paymentState = null)
+    }
+
 
     private fun getCustomPrinterDialog(): PlugPagCustomPrinterLayout {
         val customDialog = PlugPagCustomPrinterLayout()
