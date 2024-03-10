@@ -80,6 +80,7 @@ dependencies {
     implementation("com.google.dagger:hilt-android:2.48.1")
     kapt("com.google.dagger:hilt-android-compiler:2.48.1")
 
+    implementation("androidx.navigation:navigation-compose:2.5.3")
     implementation("androidx.hilt:hilt-navigation-compose:1.0.0")
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
@@ -90,6 +91,8 @@ dependencies {
 
     implementation("br.com.uol.pagseguro.plugpagservice.wrapper:wrapper:1.22.0")
     implementation("com.journeyapps:zxing-android-embedded:4.1.0")
+
+    implementation("androidx.compose.runtime:runtime-livedata:1.6.1")
 }
 
 kapt {

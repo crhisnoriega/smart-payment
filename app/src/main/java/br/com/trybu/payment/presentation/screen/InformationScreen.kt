@@ -1,6 +1,7 @@
 package br.com.trybu.payment.presentation.screen
 
-import android.os.Build
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -10,24 +11,16 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBox
-import androidx.compose.material.icons.outlined.AccountCircle
-import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -35,11 +28,13 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.trybu.payment.R
 import br.com.trybu.payment.navigation.Routes
+import br.com.trybu.payment.presentation.viewmodel.OperationInfoViewModel
 import br.com.trybu.payment.presentation.viewmodel.PaymentViewModel
-import br.com.trybu.payment.presentation.viewmodel.UIState
 import br.com.trybu.ui.theme.AppTheme
 import br.com.trybu.ui.theme.Body1
 import br.com.trybu.ui.theme.Title2
+import br.com.trybu.ui.theme.blue_500
+import br.com.trybu.ui.theme.blue_600
 import br.com.trybu.ui.widget.AppBottomSheet
 import br.com.trybu.ui.widget.AppScaffold
 import br.com.trybu.ui.widget.PrimaryTopBar
@@ -49,7 +44,7 @@ import br.com.trybu.ui.widget.text.AppTextField
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InformationScreen(
-    viewModel: PaymentViewModel = hiltViewModel(),
+    viewModel: OperationInfoViewModel = hiltViewModel(),
     route: (String) -> Unit,
 ) {
 
@@ -60,11 +55,16 @@ fun InformationScreen(
     AppScaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
-            PrimaryTopBar(
-                title = {
-                    Text(text = "Pagamentos")
-                }
-            )
+            Column(modifier = Modifier
+                .fillMaxWidth()
+                .background(color = blue_500)) {
+                Image(
+                    modifier = Modifier.padding(horizontal = 120.dp),
+                    painter = painterResource(id = R.drawable.logo_elosgate),
+                    contentDescription = "",
+                    colorFilter = ColorFilter.tint(Color.White)
+                )
+            }
         }
     ) { padding ->
         InformationContent(
@@ -76,7 +76,7 @@ fun InformationScreen(
             AppBottomSheet(
                 painter = painterResource(id = br.com.trybu.payment.ui.R.drawable.baseline_store_24),
                 title = "Dados do estabelecimento",
-                onDismiss = { viewModel.hideInfo()},
+                onDismiss = { viewModel.hideInfo() },
                 state = bottomSheet
             ) {
                 Column(modifier = Modifier.padding(horizontal = 24.dp)) {

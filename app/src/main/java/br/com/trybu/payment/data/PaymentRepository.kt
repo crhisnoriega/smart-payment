@@ -30,15 +30,15 @@ class PaymentRepository @Inject constructor(
             )
         )
 
-        val joined = mutableListOf<RetrieveOperationsResponse.Items.Operation>()
-        response.body()?.items?.forEach {
-            joined.add(RetrieveOperationsResponse.Items.Operation(
+        val joined = mutableListOf<RetrieveOperationsResponse.Operation.TransactionType>()
+        response.body()?.operations?.forEach {
+            joined.add(RetrieveOperationsResponse.Operation.TransactionType(
                 htmlString = it.htmlString,
                 isHeader = true
             ))
-            joined.addAll(it.items)
+            joined.addAll(it.transactionsTypes)
         }
 
-        emit(joined)
+        emit(response.body()?.operations)
     }
 }

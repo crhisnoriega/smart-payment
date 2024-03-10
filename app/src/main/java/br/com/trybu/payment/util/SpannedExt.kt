@@ -1,6 +1,7 @@
 package br.com.trybu.payment.util
 
 import android.graphics.Typeface
+import android.text.SpannableStringBuilder
 import android.text.Spanned
 import android.text.style.ForegroundColorSpan
 import android.text.style.StyleSpan
@@ -12,14 +13,18 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.core.text.HtmlCompat
 
 
-fun Spanned.toAnnotatedString(): AnnotatedString = buildAnnotatedString {
-    val spanned = this@toAnnotatedString
+fun String?.toAnnotatedString(): AnnotatedString = buildAnnotatedString {
+
+    val spannableString = SpannableStringBuilder(this@toAnnotatedString).toString()
+    val spanned = HtmlCompat.fromHtml(spannableString, HtmlCompat.FROM_HTML_MODE_COMPACT)
+
     append(spanned.toString())
-    getSpans(0, spanned.length, Any::class.java).forEach { span ->
-        val start = getSpanStart(span)
-        val end = getSpanEnd(span)
+    spanned.getSpans(0, spanned.length, Any::class.java).forEach { span ->
+        val start = spanned.getSpanStart(span)
+        val end = spanned.getSpanEnd(span)
         when (span) {
             is StyleSpan -> when (span.style) {
                 Typeface.BOLD -> addStyle(SpanStyle(fontWeight = FontWeight.Bold), start, end)

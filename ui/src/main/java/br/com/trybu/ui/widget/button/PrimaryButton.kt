@@ -44,7 +44,7 @@ fun PreviewPrimaryButton() {
                 modifier = Modifier.padding(16.dp),
                 onClick = { }
             ) {
-                Text("Primary Button")
+                Text("Primary Button\nabc")
             }
         }
     }

@@ -1,13 +1,11 @@
 package br.com.trybu.payment.presentation.viewmodel
 
-import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.core.os.postDelayed
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -36,66 +34,13 @@ import javax.inject.Inject
 
 @HiltViewModel
 class PaymentViewModel @Inject constructor(
-    private val paymentRepository: PaymentRepository,
-    private val keyRepository: KeyRepository,
     private val plugPag: PlugPag
 ) : ViewModel() {
 
-    var uiState = MutableLiveData<String>()
     var state by mutableStateOf(UIState(operations = listOf()))
     private var transactionFinished = false
-    fun retrieveOperations(document: String) = viewModelScope.launch {
-        state = state.copy(operations = listOf(), isLoading = true)
-        safeAPICall {
-            paymentRepository.retrieveOperations(
-                keyRepository.retrieveKey(), document
-            )
-        }.collect {
-            when (it) {
-                is Resources.Success<*> -> {
-                    val newOperations = it.data as List<RetrieveOperationsResponse.Items.Operation>
-                    state = state.copy(operations = newOperations, isLoading = false)
-                }
 
-                is Resources.Error -> state =
-                    state.copy(error = it.error.message, currentTransactionId = null)
-
-                is Resources.Loading -> {
-
-                }
-            }
-        }
-    }
-
-    fun retrieveKey() = viewModelScope.launch {
-        paymentRepository.retrieveKey(serialNumber = "PBA1238673598").catch {}
-            .collect { establishment ->
-                establishment?.key?.let { keyRepository.persisKey(it) }
-                state = state.copy(
-                    wasInitialized = true,
-                    establishmentName = establishment?.establismentName,
-                    establishmentDocument = establishment?.document,
-                    serialNumber = "PBA1238673598",
-                    showInfo = true
-                )
-
-                Handler(Looper.getMainLooper()).postDelayed({
-                    state = state.copy(showInfo = false)
-                }, 5000)
-            }
-    }
-
-    private fun getCustomPrinterDialog(): PlugPagCustomPrinterLayout {
-        val customDialog = PlugPagCustomPrinterLayout()
-        customDialog.title = "Impressão de comprovante"
-        customDialog.maxTimeShowPopup = 60
-        customDialog.buttonBackgroundColor = "#1462A6"
-        customDialog.buttonBackgroundColorDisabled = "#8F8F8F"
-        return customDialog
-    }
-
-
-    fun doPayment(operation: RetrieveOperationsResponse.Items.Operation) {
+    fun doPayment(operation: RetrieveOperationsResponse.Operation.TransactionType) {
         if (state.currentTransactionId != null) return
         state = state.copy(currentTransactionId = operation.transactionId)
         transactionFinished = false
@@ -116,7 +61,7 @@ class PaymentViewModel @Inject constructor(
                             state.copy(paymentState = null)
                         }
 
-                        18 -> successPayment()
+                        18 -> state
                         else -> state.copy(paymentState = data.customMessage)
                     }
 
@@ -157,23 +102,15 @@ class PaymentViewModel @Inject constructor(
         }
     }
 
-    fun dismissError() {
-        state = state.copy(error = null, paymentState = null)
+
+    private fun getCustomPrinterDialog(): PlugPagCustomPrinterLayout {
+        val customDialog = PlugPagCustomPrinterLayout()
+        customDialog.title = "Impressão de comprovante"
+        customDialog.maxTimeShowPopup = 60
+        customDialog.buttonBackgroundColor = "#1462A6"
+        customDialog.buttonBackgroundColorDisabled = "#8F8F8F"
+        return customDialog
     }
 
-    private fun successPayment(): UIState {
-        return state
-    }
 
-    fun initialized() {
-        state = state.copy(wasInitialized = false)
-    }
-
-    fun openCamera() {
-        uiState.value = ""
-    }
-
-    fun hideInfo() {
-        state = state.copy(showInfo = false)
-    }
 }

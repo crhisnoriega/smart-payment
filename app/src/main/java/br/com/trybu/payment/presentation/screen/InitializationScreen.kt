@@ -17,11 +17,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.trybu.payment.R
+import br.com.trybu.payment.presentation.viewmodel.OperationInfoViewModel
 import br.com.trybu.payment.presentation.viewmodel.PaymentViewModel
 
 @Composable
 fun InitializationScreen(
-    viewModel: PaymentViewModel = hiltViewModel(),
+    viewModel: OperationInfoViewModel = hiltViewModel(),
     modifier: Modifier = Modifier,
     navigate: (String) -> Unit
 ) {

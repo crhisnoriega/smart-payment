@@ -5,16 +5,16 @@ import java.math.BigDecimal
 
 data class RetrieveOperationsResponse(
     @SerializedName("Errors") val errors: List<Any>,
-    @SerializedName("Itens") val items: List<Items>
+    @SerializedName("Itens") val operations: List<Operation>
 ) {
 
-    data class Items(
-        @SerializedName("Cancalamento") val isCancel: Boolean?,
+    data class Operation(
+        @SerializedName("Cancalamento") val isRefund: Boolean?,
         @SerializedName("Cobranca") val isPayment: Boolean?,
         @SerializedName("Html") val htmlString: String?,
-        @SerializedName("Itens") val items: List<Operation>
+        @SerializedName("Itens") val transactionsTypes: List<TransactionType>
     ) {
-        data class Operation(
+        data class TransactionType(
             @SerializedName("DataPagamento") val paymentDate: String? = null,
             @SerializedName("Html") val htmlString: String? = null,
             @SerializedName("Parcelas") val installmentsNumber: Int? = null,
