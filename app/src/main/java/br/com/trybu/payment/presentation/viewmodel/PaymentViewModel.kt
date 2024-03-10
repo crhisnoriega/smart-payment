@@ -40,7 +40,7 @@ class PaymentViewModel @Inject constructor(
     var state by mutableStateOf(UIState(operations = listOf()))
     private var transactionFinished = false
 
-    fun dddoPayment(operation: RetrieveOperationsResponse.Operation.TransactionType) {
+    fun doPayment(operation: RetrieveOperationsResponse.Operation.TransactionType) {
         if (state.currentTransactionId != null) return
         state = state.copy(currentTransactionId = operation.transactionId)
         transactionFinished = false
