@@ -40,6 +40,7 @@ import br.com.trybu.payment.util.toAnnotatedString
 import br.com.trybu.ui.theme.Subtitle2
 import br.com.trybu.ui.theme.blue_500
 import br.com.trybu.ui.widget.AppScaffold
+import br.com.trybu.ui.widget.AppTopBar
 import br.com.trybu.ui.widget.button.PrimaryButton
 import br.com.trybu.ui.widget.card.AppCard
 import com.google.gson.Gson
@@ -59,24 +60,20 @@ fun OperationsListingScreen(
     AppScaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(color = blue_500)
-            ) {
-                Image(
-                    modifier = Modifier.padding(horizontal = 120.dp),
-                    painter = painterResource(id = R.drawable.logo_elosgate),
-                    contentDescription = "",
-                    colorFilter = ColorFilter.tint(Color.White)
-                )
+            AppTopBar(painter = painterResource(id = R.drawable.logo_elosgate)) {
+                route("back")
             }
         }
     ) {
         when {
             state.isLoading == true -> LoadingFullScreen()
-            state.operations.isNotEmpty() -> LazyColumn(modifier = Modifier.fillMaxSize()) {
-                items(state.operations) {
+            state.operations == null -> EmptyList()
+            state.operations != null && state.operations.isNotEmpty() == true -> LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(top = 60.dp)
+            ) {
+                items(state.operations ?: listOf()) {
                     OperationCard(operation = it) {
                         val routeStr = Routes.payment.details.replace(
                             "{operation}",
@@ -108,9 +105,9 @@ fun OperationCard(
     operation: RetrieveOperationsResponse.Operation,
     onSelect: (RetrieveOperationsResponse.Operation) -> Unit
 ) {
-
-
-    AppCard(modifier = modifier.fillMaxWidth()) {
+    AppCard(modifier = modifier
+        .fillMaxWidth()
+        .padding(horizontal = 4.dp, vertical = 2.dp)) {
         Column(modifier = Modifier
             .fillMaxWidth()
             .clickable {
@@ -118,8 +115,7 @@ fun OperationCard(
             }) {
             Row(
                 Modifier
-                    .padding(top = 32.dp, bottom = 8.dp)
-                    .padding(horizontal = 24.dp),
+                    .padding(all = 20.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(

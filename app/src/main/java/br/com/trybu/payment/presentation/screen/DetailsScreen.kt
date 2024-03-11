@@ -29,6 +29,7 @@ import br.com.trybu.payment.util.toPaymentType
 import br.com.trybu.ui.theme.Title2
 import br.com.trybu.ui.theme.blue_500
 import br.com.trybu.ui.widget.AppScaffold
+import br.com.trybu.ui.widget.AppTopBar
 import br.com.trybu.ui.widget.button.TertiaryButton
 import br.com.trybu.ui.widget.loading.LoadablePrimaryButton
 
@@ -49,24 +50,15 @@ fun DetailsScreen(
     AppScaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(color = blue_500)
-            ) {
-                Image(
-                    modifier = Modifier.padding(horizontal = 120.dp),
-                    painter = painterResource(id = R.drawable.logo_elosgate),
-                    contentDescription = "",
-                    colorFilter = ColorFilter.tint(Color.White)
-                )
+            AppTopBar(painter = painterResource(id = R.drawable.logo_elosgate)) {
+                goBack()
             }
         }
     ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(all = 24.dp),
+                .padding(horizontal = 24.dp, vertical = 60.dp),
             verticalArrangement = Arrangement.SpaceBetween
         )
         {

@@ -37,9 +37,10 @@ class OperationInfoViewModel @Inject constructor(
     private val paymentRepository: PaymentRepository,
     private val keyRepository: KeyRepository,
 
-) : ViewModel() {
+    ) : ViewModel() {
 
     var uiState = MutableLiveData<String>()
+    var qrCode = MutableLiveData<String>()
     var state by mutableStateOf(UIState(operations = listOf()))
 
 
@@ -53,19 +54,25 @@ class OperationInfoViewModel @Inject constructor(
             when (it) {
                 is Resources.Success<*> -> {
                     val newOperations = it.data as List<RetrieveOperationsResponse.Operation>
-                    state = state.copy(operations = newOperations, isLoading = false)
-
+                    state = state.copy(
+                        operations = if (newOperations.isEmpty()) null else newOperations,
+                        isLoading = false
+                    )
                 }
 
                 is Resources.Error -> state =
-                    state.copy(error = it.error.message, currentTransactionId = null)
+                    state.copy(
+                        error = it.error.message,
+                        currentTransactionId = null,
+                        operations = null
+                    )
 
                 is Resources.Loading -> {
 
                 }
             }
 
-            uiState.value = ""
+            qrCode.value = ""
         }
     }
 
@@ -118,6 +125,6 @@ class OperationInfoViewModel @Inject constructor(
     }
 
     fun qrCode(contents: String) {
-        uiState.value = contents
+        qrCode.value = contents
     }
 }

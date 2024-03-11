@@ -53,10 +53,8 @@ class MainActivity : ComponentActivity() {
             val result: IntentResult =
                 IntentIntegrator.parseActivityResult(requestCode, resultCode, data)
             if (result.contents == null) {
-                Toast.makeText(this, "Cancelled", Toast.LENGTH_LONG).show()
             } else {
-                Toast.makeText(this, "Scanned: " + result.contents, Toast.LENGTH_LONG)
-                    .show()
+
                 viewModel.qrCode(result.contents)
             }
         }

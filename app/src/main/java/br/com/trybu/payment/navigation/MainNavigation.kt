@@ -39,7 +39,7 @@ fun MainNavigation(
         composable(route = Routes.payment.operations) { entry ->
             val query = entry.arguments?.getString("query") ?: ""
             OperationsListingScreen(viewModel = paymentViewModel, query = query) { route ->
-                controller.navigate(route)
+                if (route == "back") controller.popBackStack() else controller.navigate(route)
             }
         }
 

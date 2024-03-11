@@ -16,6 +16,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -44,9 +45,11 @@ import br.com.trybu.ui.theme.blue_500
 import br.com.trybu.ui.theme.blue_600
 import br.com.trybu.ui.widget.AppBottomSheet
 import br.com.trybu.ui.widget.AppScaffold
+import br.com.trybu.ui.widget.AppTopBar
 import br.com.trybu.ui.widget.PrimaryTopBar
 import br.com.trybu.ui.widget.button.PrimaryButton
 import br.com.trybu.ui.widget.text.AppTextField
+import br.com.trybu.ui.widget.text.mask
 import com.google.gson.Gson
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -58,11 +61,12 @@ fun InformationScreen(
 
     val bottomSheet = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val state = viewModel.state
-    val uiState by viewModel.uiState.observeAsState()
+    val qrCode by viewModel.qrCode.observeAsState()
 
-    LaunchedEffect(uiState) {
-        if (uiState?.startsWith("http") == true) {
-            val goTo = Routes.payment.operations.replace("{query}", Uri.encode(uiState!!))
+
+    LaunchedEffect(qrCode) {
+        if (qrCode.isNullOrEmpty() == false) {
+            val goTo = Routes.payment.operations.replace("{query}", Uri.encode(qrCode!!))
             route(goTo)
         }
     }
@@ -70,18 +74,7 @@ fun InformationScreen(
     AppScaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(color = blue_500)
-            ) {
-                Image(
-                    modifier = Modifier.padding(horizontal = 120.dp),
-                    painter = painterResource(id = R.drawable.logo_elosgate),
-                    contentDescription = "",
-                    colorFilter = ColorFilter.tint(Color.White)
-                )
-            }
+            AppTopBar(painter = painterResource(id = R.drawable.logo_elosgate))
         }
     ) { padding ->
         InformationContent(
@@ -129,6 +122,7 @@ fun InformationContent(
     goToQRCode: () -> Unit
 ) {
     var query by remember { mutableStateOf("") }
+    val mask = remember { mask("###.###.###-##") }
     Column(
         modifier = Modifier
             .fillMaxSize(),
@@ -146,9 +140,8 @@ fun InformationContent(
             Text(text = "Busca", style = Title2.copy(fontSize = 18.sp), color = Color.Black)
             AppTextField(
                 value = query,
-                onValueChange = {
-                    query = it
-                },
+                onValueChange = { query = it.digits().take(11) },
+                visualTransformation = mask,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 0.dp)
@@ -187,3 +180,5 @@ fun Preview() {
 
     }
 }
+
+fun String.digits() = filter { it.isDigit() }
