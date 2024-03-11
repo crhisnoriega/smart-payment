@@ -1,5 +1,6 @@
 package br.com.trybu.payment.presentation.screen
 
+import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -46,6 +47,7 @@ import br.com.trybu.ui.widget.AppScaffold
 import br.com.trybu.ui.widget.PrimaryTopBar
 import br.com.trybu.ui.widget.button.PrimaryButton
 import br.com.trybu.ui.widget.text.AppTextField
+import com.google.gson.Gson
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -60,7 +62,8 @@ fun InformationScreen(
 
     LaunchedEffect(uiState) {
         if (uiState?.startsWith("http") == true) {
-            route(Routes.payment.operations.replace("{query}", uiState!!))
+            val goTo = Routes.payment.operations.replace("{query}", Uri.encode(uiState!!))
+            route(goTo)
         }
     }
 
