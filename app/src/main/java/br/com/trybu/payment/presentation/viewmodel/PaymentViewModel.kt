@@ -1,7 +1,5 @@
 package br.com.trybu.payment.presentation.viewmodel
 
-import android.os.Handler
-import android.os.Looper
 import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -9,10 +7,6 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import br.com.trybu.payment.api.Resources
-import br.com.trybu.payment.api.safeAPICall
-import br.com.trybu.payment.data.KeyRepository
-import br.com.trybu.payment.data.PaymentRepository
 import br.com.trybu.payment.data.model.RetrieveOperationsResponse
 import br.com.trybu.payment.util.PaymentConstants.INSTALLMENT_TYPE_A_VISTA
 import br.com.trybu.payment.util.PaymentConstants.TYPE_CREDITO
@@ -26,10 +20,12 @@ import br.com.uol.pagseguro.plugpagservice.wrapper.data.request.PlugPagBeepData
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import java.math.BigDecimal
 import javax.inject.Inject
+
+
+private val TRANSACTION_FINAL_STATES = listOf(18, 19)
 
 
 @HiltViewModel
@@ -37,16 +33,25 @@ class PaymentViewModel @Inject constructor(
     private val plugPag: PlugPag
 ) : ViewModel() {
 
+
+    var uiState = MutableLiveData<String>()
     var state by mutableStateOf(UIState(operations = listOf()))
     private var transactionFinished = false
 
     fun doPayment(operation: RetrieveOperationsResponse.Operation.TransactionType) {
+
+
         if (state.currentTransactionId != null) return
-        state = state.copy(currentTransactionId = operation.transactionId)
+        state =
+            state.copy(currentTransactionId = operation.transactionId, paymentState = "PROCESSANDO")
         transactionFinished = false
 
         CoroutineScope(Dispatchers.IO).launch {
             Log.i("log", "start: ${operation.transactionId}")
+
+            if (plugPag.isServiceBusy()) {
+                abort()
+            }
 
             plugPag.beep(PlugPagBeepData(PlugPagBeepData.FREQUENCE_LEVEL_0, 1))
             plugPag.setEventListener(object : PlugPagEventListener {
@@ -54,14 +59,15 @@ class PaymentViewModel @Inject constructor(
                     Log.i(
                         "log", "eventCode: ${data.eventCode} customMessage: ${data.customMessage}"
                     )
-                    if (transactionFinished == true) return
+                    if (transactionFinished) return
                     state = when (data.eventCode) {
-                        4 -> {
+                        in TRANSACTION_FINAL_STATES -> {
                             transactionFinished = true
-                            state.copy(paymentState = null)
+                            state.copy(
+                                paymentState = data.customMessage
+                            )
                         }
 
-                        18 -> state
                         else -> state.copy(paymentState = data.customMessage)
                     }
 
@@ -81,31 +87,20 @@ class PaymentViewModel @Inject constructor(
                 )
             )
 
+            // handle json  result
             state = if (result.result != 0) {
                 state.copy(
-                    paymentState = result.message,
+                    paymentState = result.message?.uppercase(),
                     currentTransactionId = null
                 )
             } else {
-                state.copy(paymentState = "Transação aprovada", currentTransactionId = null)
+                state.copy(currentTransactionId = null)
             }
-
-            Handler(Looper.getMainLooper()).postDelayed({
-                state = state.copy(
-                    paymentState = null,
-                    currentTransactionId = null
-                )
-            }, 3000)
 
             plugPag.disposeSubscriber()
             plugPag.unbindService()
         }
     }
-
-    fun dismissError() {
-        state = state.copy(error = null, paymentState = null)
-    }
-
 
     private fun getCustomPrinterDialog(): PlugPagCustomPrinterLayout {
         val customDialog = PlugPagCustomPrinterLayout()
@@ -114,6 +109,20 @@ class PaymentViewModel @Inject constructor(
         customDialog.buttonBackgroundColor = "#1462A6"
         customDialog.buttonBackgroundColorDisabled = "#8F8F8F"
         return customDialog
+    }
+
+    fun abort() {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                plugPag.abort()
+            } catch (_: IllegalArgumentException) {
+
+            }
+        }
+
+        viewModelScope.launch {
+            uiState.value = "goback"
+        }
     }
 
 

@@ -46,7 +46,9 @@ fun MainNavigation(
             val jsonRaw = entry.arguments?.getString("operation")
             val operation =
                 Gson().fromJson(jsonRaw, RetrieveOperationsResponse.Operation::class.java)
-            DetailsScreen(viewModel = hiltViewModel(), operation = operation)
+            DetailsScreen(viewModel = hiltViewModel(), operation = operation) {
+                controller.popBackStack()
+            }
         }
     }
 }

@@ -11,6 +11,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -26,15 +29,22 @@ import br.com.trybu.payment.util.toPaymentType
 import br.com.trybu.ui.theme.Title2
 import br.com.trybu.ui.theme.blue_500
 import br.com.trybu.ui.widget.AppScaffold
+import br.com.trybu.ui.widget.button.TertiaryButton
 import br.com.trybu.ui.widget.loading.LoadablePrimaryButton
 
 @Composable
 fun DetailsScreen(
     viewModel: PaymentViewModel,
-    operation: RetrieveOperationsResponse.Operation
+    operation: RetrieveOperationsResponse.Operation,
+    goBack: () -> Unit
 ) {
 
     val state = viewModel.state
+    val uiState by viewModel.uiState.observeAsState()
+
+    LaunchedEffect(uiState) {
+        if (uiState == "goback") goBack()
+    }
 
     AppScaffold(
         modifier = Modifier.fillMaxSize(),
@@ -53,7 +63,6 @@ fun DetailsScreen(
             }
         }
     ) { padding ->
-
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -75,6 +84,14 @@ fun DetailsScreen(
             )
 
             LazyColumn(modifier = Modifier.fillMaxWidth()) {
+                item {
+                    TertiaryButton(
+                        onClick = { viewModel.abort() },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(text = "Cancelar")
+                    }
+                }
                 items(operation.transactionsTypes) {
                     LoadablePrimaryButton(
                         isLoading = state.currentTransactionId != null,

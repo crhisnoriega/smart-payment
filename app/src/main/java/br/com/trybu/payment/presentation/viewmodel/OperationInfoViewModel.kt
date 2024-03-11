@@ -83,7 +83,7 @@ class OperationInfoViewModel @Inject constructor(
 
                 Handler(Looper.getMainLooper()).postDelayed({
                     state = state.copy(showInfo = false)
-                }, 5000)
+                }, 3000)
             }
     }
 
