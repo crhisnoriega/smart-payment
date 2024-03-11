@@ -32,7 +32,6 @@ fun EmptyList(modifier: Modifier = Modifier) {
         Box(
             modifier = modifier
                 .fillMaxSize()
-                .testTag("indicador_carregamento")
         ) {
             Text(
                 text = "Nenhum registro encontrado",
