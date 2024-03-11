@@ -31,14 +31,15 @@ fun MainNavigation(
         }
 
         composable(route = Routes.payment.information) {
-            InformationScreen(viewModel = paymentViewModel) {
-                controller.navigate(Routes.payment.operations)
+            InformationScreen(viewModel = paymentViewModel) { route ->
+                controller.navigate(route)
             }
         }
 
-        composable(route = Routes.payment.operations) {
-            OperationsListingScreen(viewModel = paymentViewModel) {
-                controller.navigate(it)
+        composable(route = Routes.payment.operations) { entry ->
+            val query = entry.arguments?.getString("query") ?: ""
+            OperationsListingScreen(viewModel = paymentViewModel, query = query) { route ->
+                controller.navigate(route)
             }
         }
 

@@ -47,14 +47,14 @@ import com.google.gson.Gson
 @Composable
 fun OperationsListingScreen(
     viewModel: OperationInfoViewModel,
+    query: String,
     route: (String) -> Unit
 ) {
     LaunchedEffect(Unit) {
-        viewModel.retrieveOperations("11111111111")
+        viewModel.retrieveOperations(query)
     }
 
     val state = viewModel.state
-
 
     AppScaffold(
         modifier = Modifier.fillMaxSize(),
@@ -90,7 +90,7 @@ fun OperationsListingScreen(
                 item {
                     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
                         PrimaryButton(modifier = Modifier.padding(vertical = 16.dp), onClick = {
-                            viewModel.retrieveOperations("11111111111")
+                            viewModel.retrieveOperations(query)
                         }) {
                             Text(text = "Atualizar")
                         }

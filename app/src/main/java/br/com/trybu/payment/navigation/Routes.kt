@@ -7,7 +7,7 @@ object Routes {
     object Payment {
         const val initialize = "initialize"
         const val information = "information"
-        const val operations = "operations"
+        const val operations = "operations/{query}"
         const val details = "details/{operation}"
     }
 

@@ -20,6 +20,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -57,7 +60,7 @@ fun InformationScreen(
 
     LaunchedEffect(uiState) {
         if (uiState?.startsWith("http") == true) {
-            route(Routes.payment.operations)
+            route(Routes.payment.operations.replace("{query}", uiState!!))
         }
     }
 
@@ -80,7 +83,10 @@ fun InformationScreen(
     ) { padding ->
         InformationContent(
             goToQRCode = { viewModel.openCamera() },
-            goToOps = { route(Routes.payment.operations) }
+            goToOps = {
+                val goTo = Routes.payment.operations.replace("{query}", it)
+                route(goTo)
+            }
         )
 
         if (state.showInfo) {
@@ -116,9 +122,10 @@ fun InformationScreen(
 
 @Composable
 fun InformationContent(
-    goToOps: () -> Unit,
+    goToOps: (String) -> Unit,
     goToQRCode: () -> Unit
 ) {
+    var query by remember { mutableStateOf("") }
     Column(
         modifier = Modifier
             .fillMaxSize(),
@@ -135,14 +142,16 @@ fun InformationContent(
             Spacer(modifier = Modifier.height(16.dp))
             Text(text = "Busca", style = Title2.copy(fontSize = 18.sp), color = Color.Black)
             AppTextField(
-                value = "111.111.111.-11",
-                onValueChange = {},
+                value = query,
+                onValueChange = {
+                    query = it
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 0.dp)
             )
             PrimaryButton(
-                onClick = { goToOps() },
+                onClick = { goToOps(query) },
                 modifier = Modifier
                     .padding(16.dp)
                     .align(alignment = Alignment.End)
