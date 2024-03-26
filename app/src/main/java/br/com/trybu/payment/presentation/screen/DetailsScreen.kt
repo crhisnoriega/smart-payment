@@ -26,6 +26,7 @@ import br.com.trybu.payment.data.model.RetrieveOperationsResponse
 import br.com.trybu.payment.presentation.viewmodel.PaymentViewModel
 import br.com.trybu.payment.util.toAnnotatedString
 import br.com.trybu.payment.util.toPaymentType
+import br.com.trybu.ui.theme.Subtitle2
 import br.com.trybu.ui.theme.Title2
 import br.com.trybu.ui.theme.blue_500
 import br.com.trybu.ui.widget.AppScaffold
@@ -58,12 +59,18 @@ fun DetailsScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 24.dp, vertical = 60.dp),
+                .padding(start = 24.dp, end = 24.dp, top = 60.dp, bottom = 24.dp),
             verticalArrangement = Arrangement.SpaceBetween
         )
         {
             Column(modifier = Modifier.fillMaxWidth()) {
                 Text(text = operation.htmlString.toAnnotatedString())
+
+                Column {
+                    operation.transactionsTypes.forEach {
+                        Text(text = it.htmlString.toAnnotatedString(), style = Subtitle2)
+                    }
+                }
             }
 
             Text(
@@ -74,6 +81,8 @@ fun DetailsScreen(
                     .align(alignment = Alignment.CenterHorizontally)
                     .padding(bottom = 50.dp)
             )
+
+
 
             LazyColumn(modifier = Modifier.fillMaxWidth()) {
                 item {

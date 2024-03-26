@@ -122,7 +122,6 @@ fun InformationContent(
     goToQRCode: () -> Unit
 ) {
     var query by remember { mutableStateOf("") }
-    val mask = remember { mask("###.###.###-##") }
     Column(
         modifier = Modifier
             .fillMaxSize(),
@@ -135,13 +134,11 @@ fun InformationContent(
                 .padding(16.dp)
                 .align(alignment = Alignment.Start)
         ) {
-
             Spacer(modifier = Modifier.height(16.dp))
-            Text(text = "Busca", style = Title2.copy(fontSize = 18.sp), color = Color.Black)
+            Text(text = "Digite CPF, número de contrato para localizar a venda", style = Title2.copy(fontSize = 18.sp), color = Color.Black)
             AppTextField(
                 value = query,
-                onValueChange = { query = it.digits().take(11) },
-                visualTransformation = mask,
+                onValueChange = { query = it },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 0.dp)
@@ -152,7 +149,7 @@ fun InformationContent(
                     .padding(16.dp)
                     .align(alignment = Alignment.End)
             ) {
-                Text(text = "Busca por texto")
+                Text(text = "Procurar venda")
             }
         }
 

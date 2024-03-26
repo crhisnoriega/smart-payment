@@ -105,9 +105,11 @@ fun OperationCard(
     operation: RetrieveOperationsResponse.Operation,
     onSelect: (RetrieveOperationsResponse.Operation) -> Unit
 ) {
-    AppCard(modifier = modifier
-        .fillMaxWidth()
-        .padding(horizontal = 4.dp, vertical = 2.dp)) {
+    AppCard(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 4.dp, vertical = 2.dp)
+    ) {
         Column(modifier = Modifier
             .fillMaxWidth()
             .clickable {
@@ -128,6 +130,14 @@ fun OperationCard(
                 Text(
                     text = operation.htmlString.toAnnotatedString(), style = Subtitle2
                 )
+            }
+
+            Column(modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 64.dp)) {
+                operation.transactionsTypes.forEach {
+                    Text(text = it.htmlString.toAnnotatedString(), style = Subtitle2)
+                }
             }
         }
     }
