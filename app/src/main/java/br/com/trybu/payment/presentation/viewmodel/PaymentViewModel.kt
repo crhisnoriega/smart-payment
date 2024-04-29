@@ -6,7 +6,6 @@ import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.core.os.postDelayed
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -68,7 +67,6 @@ class PaymentViewModel @Inject constructor(
                 abort()
             }
 
-
             var transaction = Transaction(
                 id = UUID.randomUUID().toString(),
                 createDate = currentDate(),
@@ -84,6 +82,7 @@ class PaymentViewModel @Inject constructor(
                         "log", "eventCode: ${data.eventCode} customMessage: ${data.customMessage}"
                     )
                     if (transactionFinished) return
+
                     state = when (data.eventCode) {
                         in TRANSACTION_FINAL_STATES -> {
                             transactionFinished = true
@@ -97,6 +96,7 @@ class PaymentViewModel @Inject constructor(
 
                 }
             })
+
             plugPag.setPlugPagCustomPrinterLayout(getCustomPrinterDialog())
 
             val result = plugPag.doPayment(
@@ -112,17 +112,20 @@ class PaymentViewModel @Inject constructor(
                 )
             )
 
-            state = state.copy(
-                paymentState = if (result.result != 0) result.message?.uppercase() else null,
-                currentTransactionId = null
-            )
+            updateStateWithResult(result)
 
             transaction =
                 transaction.copy(status = if (result.result != 0) Status.REJECTED else Status.APPROVED)
 
             persistResult(transaction, result)
-
         }
+    }
+
+    private fun updateStateWithResult(result: PlugPagTransactionResult) {
+        state = state.copy(
+            paymentState = if (result.result != 0) result.message?.uppercase() else null,
+            currentTransactionId = null
+        )
     }
 
     private suspend fun persistResult(
@@ -130,14 +133,13 @@ class PaymentViewModel @Inject constructor(
         result: PlugPagTransactionResult
     ) {
         when (transaction.status) {
-            Status.APPROVED -> sendApprovedResult(result, transaction)
+            Status.APPROVED -> sendTransactionResult(result, transaction)
             else -> transactionDB.transactionDao().insertOrUpdateTransaction(transaction)
         }
     }
 
-    private suspend fun sendApprovedResult(
-        result: PlugPagTransactionResult,
-        transaction: Transaction
+    private suspend fun sendTransactionResult(
+        result: PlugPagTransactionResult, transaction: Transaction
     ) {
         state = state.copy(paymentState = "ENVIANDO...")
         safeAPICall {
@@ -150,18 +152,26 @@ class PaymentViewModel @Inject constructor(
             when (it) {
                 is Resources.Success<*> -> {
                     updateTransactionAsSuccess(transaction, result)
-                    state = state.copy(paymentState = "ENVIANDO COM SUCESSO")
+                    state = state.copy(paymentState = "ENVIADO COM SUCESSO")
+                    Handler(Looper.getMainLooper()).postDelayed({
+                        stopServiceAndGoBack()
+                    }, 1000)
                 }
 
-                is Resources.Error -> {}
+                is Resources.Error -> {
+                    state = state.copy(paymentState = "ERRO NO ENVIO")
+                    Handler(Looper.getMainLooper()).postDelayed({
+                        stopServiceAndGoBack()
+                    }, 1000)
+                }
+
                 else -> {}
             }
         }
     }
 
     private fun updateTransactionAsSuccess(
-        transaction: Transaction,
-        result: PlugPagTransactionResult
+        transaction: Transaction, result: PlugPagTransactionResult
     ) {
 
         val transactionEntity = transaction.copy(
@@ -170,11 +180,6 @@ class PaymentViewModel @Inject constructor(
             status = Status.SENT_UPDATED
         )
         transactionDB.transactionDao().insertOrUpdateTransaction(transactionEntity)
-
-        Handler(Looper.getMainLooper()).postDelayed({
-            stopServiceAndGoBack()
-        }, 1000)
-
     }
 
     private fun stopServiceAndGoBack() {
