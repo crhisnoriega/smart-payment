@@ -37,7 +37,7 @@ import br.com.trybu.ui.widget.loading.LoadablePrimaryButton
 @Composable
 fun DetailsScreen(
     viewModel: PaymentViewModel,
-    operation: RetrieveOperationsResponse.Operation,
+    transactionType: RetrieveOperationsResponse.Operation.TransactionType,
     goBack: () -> Unit
 ) {
 
@@ -46,6 +46,10 @@ fun DetailsScreen(
 
     LaunchedEffect(uiState) {
         if (uiState == "goback") goBack()
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.doPayment(transactionType)
     }
 
     AppScaffold(
@@ -64,13 +68,7 @@ fun DetailsScreen(
         )
         {
             Column(modifier = Modifier.fillMaxWidth()) {
-                Text(text = operation.htmlString.toAnnotatedString())
-
-                Column {
-                    operation.transactionsTypes.forEach {
-                        Text(text = it.htmlString.toAnnotatedString(), style = Subtitle2)
-                    }
-                }
+                Text(text = transactionType.htmlString.toAnnotatedString())
             }
 
             Text(
@@ -82,28 +80,13 @@ fun DetailsScreen(
                     .padding(bottom = 50.dp)
             )
 
-
-
             LazyColumn(modifier = Modifier.fillMaxWidth()) {
                 item {
                     TertiaryButton(
                         onClick = { viewModel.abort() },
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text(text = "Cancelar")
-                    }
-                }
-                items(operation.transactionsTypes) {
-                    LoadablePrimaryButton(
-                        isLoading = state.currentTransactionId != null,
-                        onClick = {
-                            viewModel.doPayment(it)
-                        }) {
-                        Column(verticalArrangement = Arrangement.Center) {
-                            Text(
-                                text = "${it.paymentType.toPaymentType()} R$ ${it.value}"
-                            )
-                        }
+                        Text(text = "Cancelar Operação")
                     }
                 }
             }

@@ -31,6 +31,7 @@ android {
             )
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
@@ -93,6 +94,11 @@ dependencies {
     implementation("com.journeyapps:zxing-android-embedded:4.1.0")
 
     implementation("androidx.compose.runtime:runtime-livedata:1.6.1")
+
+    val room_version = "2.6.1"
+
+    implementation("androidx.room:room-runtime:$room_version")
+    kapt("androidx.room:room-compiler:$room_version")
 }
 
 kapt {

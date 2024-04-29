@@ -46,7 +46,7 @@ fun MainNavigation(
         composable(route = Routes.payment.details) { entry ->
             val jsonRaw = entry.arguments?.getString("operation")
             val operation =
-                Gson().fromJson(jsonRaw, RetrieveOperationsResponse.Operation::class.java)
+                Gson().fromJson(jsonRaw, RetrieveOperationsResponse.Operation.TransactionType::class.java)
             DetailsScreen(viewModel = hiltViewModel(), operation = operation) {
                 controller.popBackStack()
             }

@@ -40,7 +40,6 @@ class PaymentViewModel @Inject constructor(
 
     fun doPayment(operation: RetrieveOperationsResponse.Operation.TransactionType) {
 
-
         if (state.currentTransactionId != null) return
         state =
             state.copy(currentTransactionId = operation.transactionId, paymentState = "PROCESSANDO")

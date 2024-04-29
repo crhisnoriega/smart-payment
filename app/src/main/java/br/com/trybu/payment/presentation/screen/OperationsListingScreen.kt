@@ -5,6 +5,7 @@ import android.text.SpannableStringBuilder
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -37,12 +38,14 @@ import br.com.trybu.payment.navigation.Routes
 import br.com.trybu.payment.presentation.viewmodel.OperationInfoViewModel
 import br.com.trybu.payment.presentation.viewmodel.PaymentViewModel
 import br.com.trybu.payment.util.toAnnotatedString
+import br.com.trybu.payment.util.toPaymentType
 import br.com.trybu.ui.theme.Subtitle2
 import br.com.trybu.ui.theme.blue_500
 import br.com.trybu.ui.widget.AppScaffold
 import br.com.trybu.ui.widget.AppTopBar
 import br.com.trybu.ui.widget.button.PrimaryButton
 import br.com.trybu.ui.widget.card.AppCard
+import br.com.trybu.ui.widget.loading.LoadablePrimaryButton
 import com.google.gson.Gson
 
 @Composable
@@ -73,7 +76,7 @@ fun OperationsListingScreen(
                     .fillMaxSize()
                     .padding(top = 60.dp)
             ) {
-                items(state.operations ?: listOf()) {
+                items(state.operations) {
                     OperationCard(operation = it) {
                         val routeStr = Routes.payment.details.replace(
                             "{operation}",
@@ -82,7 +85,6 @@ fun OperationsListingScreen(
                         route(routeStr)
                     }
                 }
-
 
                 item {
                     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
@@ -93,7 +95,6 @@ fun OperationsListingScreen(
                         }
                     }
                 }
-
             }
         }
     }
@@ -103,18 +104,17 @@ fun OperationsListingScreen(
 fun OperationCard(
     modifier: Modifier = Modifier,
     operation: RetrieveOperationsResponse.Operation,
-    onSelect: (RetrieveOperationsResponse.Operation) -> Unit
+    onSelect: (RetrieveOperationsResponse.Operation.TransactionType) -> Unit
 ) {
     AppCard(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 4.dp, vertical = 2.dp)
     ) {
-        Column(modifier = Modifier
-            .fillMaxWidth()
-            .clickable {
-                onSelect(operation)
-            }) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+        ) {
             Row(
                 Modifier
                     .padding(all = 20.dp),
@@ -132,11 +132,25 @@ fun OperationCard(
                 )
             }
 
-            Column(modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = 64.dp)) {
-                operation.transactionsTypes.forEach {
-                    Text(text = it.htmlString.toAnnotatedString(), style = Subtitle2)
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 64.dp)
+            ) {
+                operation.transactionsTypes.forEach { transactionType ->
+                    // Text(text = it.htmlString.toAnnotatedString(), style = Subtitle2)
+
+                    LoadablePrimaryButton(
+                        isLoading = false,
+                        onClick = {
+                            onSelect(transactionType)
+                        }) {
+                        Column(verticalArrangement = Arrangement.Center) {
+                            Text(
+                                text = "${transactionType.paymentType.toPaymentType()} R$ ${transactionType.value}"
+                            )
+                        }
+                    }
                 }
             }
         }
