@@ -1,9 +1,12 @@
 package br.com.trybu.payment.presentation.viewmodel
 
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.core.os.postDelayed
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -136,6 +139,7 @@ class PaymentViewModel @Inject constructor(
         result: PlugPagTransactionResult,
         transaction: Transaction
     ) {
+        state = state.copy(paymentState = "ENVIANDO...")
         safeAPICall {
             paymentRepository.confirmPayment(
                 transactionId = transaction.id,
@@ -144,7 +148,11 @@ class PaymentViewModel @Inject constructor(
             )
         }.collect {
             when (it) {
-                is Resources.Success<*> -> updateTransactionAsSuccess(transaction, result)
+                is Resources.Success<*> -> {
+                    updateTransactionAsSuccess(transaction, result)
+                    state = state.copy(paymentState = "ENVIANDO COM SUCESSO")
+                }
+
                 is Resources.Error -> {}
                 else -> {}
             }
@@ -155,6 +163,7 @@ class PaymentViewModel @Inject constructor(
         transaction: Transaction,
         result: PlugPagTransactionResult
     ) {
+
         val transactionEntity = transaction.copy(
             jsonTransaction = Gson().toJson(result),
             lastUpdate = currentDate(),
@@ -162,7 +171,10 @@ class PaymentViewModel @Inject constructor(
         )
         transactionDB.transactionDao().insertOrUpdateTransaction(transactionEntity)
 
-        stopServiceAndGoBack()
+        Handler(Looper.getMainLooper()).postDelayed({
+            stopServiceAndGoBack()
+        }, 1000)
+
     }
 
     private fun stopServiceAndGoBack() {
