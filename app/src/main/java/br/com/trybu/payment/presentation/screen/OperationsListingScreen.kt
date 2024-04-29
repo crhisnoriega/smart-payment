@@ -85,16 +85,6 @@ fun OperationsListingScreen(
                         route(routeStr)
                     }
                 }
-
-                item {
-                    Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-                        PrimaryButton(modifier = Modifier.padding(vertical = 16.dp), onClick = {
-                            viewModel.retrieveOperations(query)
-                        }) {
-                            Text(text = "Atualizar")
-                        }
-                    }
-                }
             }
         }
     }
@@ -138,8 +128,6 @@ fun OperationCard(
                     .padding(start = 24.dp, end = 24.dp, bottom = 16.dp, top = 0.dp)
             ) {
                 operation.transactionsTypes.forEach { transactionType ->
-                    // Text(text = it.htmlString.toAnnotatedString(), style = Subtitle2)
-
                     LoadablePrimaryButton(
                         isLoading = false,
                         onClick = {

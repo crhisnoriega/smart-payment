@@ -65,7 +65,7 @@ fun InformationScreen(
 
 
     LaunchedEffect(qrCode) {
-        if (qrCode.isNullOrEmpty() == false) {
+        if (!qrCode.isNullOrEmpty()) {
             val goTo = Routes.payment.operations.replace("{query}", Uri.encode(qrCode!!))
             route(goTo)
         }

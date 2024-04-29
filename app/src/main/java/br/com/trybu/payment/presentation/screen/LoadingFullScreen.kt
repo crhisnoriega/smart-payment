@@ -11,7 +11,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.sp
 import br.com.trybu.ui.theme.Body1
+import br.com.trybu.ui.theme.Title2
 
 @Composable
 fun LoadingFullScreen(modifier: Modifier = Modifier) {
@@ -34,9 +36,10 @@ fun EmptyList(modifier: Modifier = Modifier) {
                 .fillMaxSize()
         ) {
             Text(
-                text = "Nenhum registro encontrado",
+                text = "Nenhuma venda encontrada",
                 modifier = Modifier.align(Alignment.Center),
-                style = Body1
+                style = Title2.copy(fontSize = 18.sp),
+                color = Color.Black
             )
         }
     }
