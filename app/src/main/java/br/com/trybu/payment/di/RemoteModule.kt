@@ -3,7 +3,9 @@ package br.com.trybu.payment.di
 
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.room.Room
 import br.com.trybu.payment.api.SmartPaymentAPI
+import br.com.trybu.payment.db.TransactionDB
 import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPag
 import com.google.gson.GsonBuilder
 import dagger.Module
@@ -61,4 +63,11 @@ object RemoteModule {
             .addConverterFactory(GsonConverterFactory.create(gson))
             .client(httpClient).build()
     }
+
+    @Singleton
+    @Provides
+    fun database(@ApplicationContext context: Context) = Room.databaseBuilder(
+        context,
+        TransactionDB::class.java, "database-name"
+    ).build()
 }

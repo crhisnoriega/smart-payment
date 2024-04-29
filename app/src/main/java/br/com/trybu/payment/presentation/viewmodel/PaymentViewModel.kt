@@ -7,7 +7,15 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import br.com.trybu.payment.api.Resources
+import br.com.trybu.payment.api.safeAPICall
+import br.com.trybu.payment.data.KeyRepository
+import br.com.trybu.payment.data.PaymentRepository
 import br.com.trybu.payment.data.model.RetrieveOperationsResponse
+import br.com.trybu.payment.db.TransactionDB
+import br.com.trybu.payment.db.entity.Status
+import br.com.trybu.payment.db.entity.Transaction
+import br.com.trybu.payment.db.entity.currentDate
 import br.com.trybu.payment.util.PaymentConstants.INSTALLMENT_TYPE_A_VISTA
 import br.com.trybu.payment.util.PaymentConstants.TYPE_CREDITO
 import br.com.trybu.payment.util.PaymentConstants.USER_REFERENCE
@@ -16,12 +24,15 @@ import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPagCustomPrinterLayout
 import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPagEventData
 import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPagEventListener
 import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPagPaymentData
+import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPagTransactionResult
 import br.com.uol.pagseguro.plugpagservice.wrapper.data.request.PlugPagBeepData
+import com.google.gson.Gson
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.math.BigDecimal
+import java.util.UUID
 import javax.inject.Inject
 
 
@@ -30,9 +41,11 @@ private val TRANSACTION_FINAL_STATES = listOf(18, 19)
 
 @HiltViewModel
 class PaymentViewModel @Inject constructor(
-    private val plugPag: PlugPag
+    private val plugPag: PlugPag,
+    private val transactionDB: TransactionDB,
+    private val paymentRepository: PaymentRepository,
+    private val keyRepository: KeyRepository,
 ) : ViewModel() {
-
 
     var uiState = MutableLiveData<String>()
     var state by mutableStateOf(UIState(operations = listOf()))
@@ -51,6 +64,15 @@ class PaymentViewModel @Inject constructor(
             if (plugPag.isServiceBusy()) {
                 abort()
             }
+
+
+            var transaction = Transaction(
+                id = UUID.randomUUID().toString(),
+                createDate = currentDate(),
+                lastUpdate = currentDate(),
+                status = Status.CREATED
+            )
+            transactionDB.transactionDao().insertOrUpdateTransaction(transaction)
 
             plugPag.beep(PlugPagBeepData(PlugPagBeepData.FREQUENCE_LEVEL_0, 1))
             plugPag.setEventListener(object : PlugPagEventListener {
@@ -73,6 +95,7 @@ class PaymentViewModel @Inject constructor(
                 }
             })
             plugPag.setPlugPagCustomPrinterLayout(getCustomPrinterDialog())
+
             val result = plugPag.doPayment(
                 PlugPagPaymentData(
                     type = TYPE_CREDITO,
@@ -86,20 +109,68 @@ class PaymentViewModel @Inject constructor(
                 )
             )
 
-            // handle json  result
-            state = if (result.result != 0) {
-                state.copy(
-                    paymentState = result.message?.uppercase(),
-                    currentTransactionId = null
-                )
-            } else {
-                state.copy(currentTransactionId = null)
-            }
+            state = state.copy(
+                paymentState = if (result.result != 0) result.message?.uppercase() else null,
+                currentTransactionId = null
+            )
 
-            plugPag.disposeSubscriber()
-            plugPag.unbindService()
+            transaction =
+                transaction.copy(status = if (result.result != 0) Status.REJECTED else Status.APPROVED)
+
+            persistResult(transaction, result)
+
         }
     }
+
+    private suspend fun persistResult(
+        transaction: Transaction,
+        result: PlugPagTransactionResult
+    ) {
+        when (transaction.status) {
+            Status.APPROVED -> sendApprovedResult(result, transaction)
+            else -> transactionDB.transactionDao().insertOrUpdateTransaction(transaction)
+        }
+    }
+
+    private suspend fun sendApprovedResult(
+        result: PlugPagTransactionResult,
+        transaction: Transaction
+    ) {
+        safeAPICall {
+            paymentRepository.confirmPayment(
+                transactionId = transaction.id,
+                jsonTransaction = Gson().toJson(result),
+                key = keyRepository.retrieveKey() ?: ""
+            )
+        }.collect {
+            when (it) {
+                is Resources.Success<*> -> updateTransactionAsSuccess(transaction, result)
+                is Resources.Error -> {}
+                else -> {}
+            }
+        }
+    }
+
+    private fun updateTransactionAsSuccess(
+        transaction: Transaction,
+        result: PlugPagTransactionResult
+    ) {
+        val transactionEntity = transaction.copy(
+            jsonTransaction = Gson().toJson(result),
+            lastUpdate = currentDate(),
+            status = Status.SENT_UPDATED
+        )
+        transactionDB.transactionDao().insertOrUpdateTransaction(transactionEntity)
+
+        stopServiceAndGoBack()
+    }
+
+    private fun stopServiceAndGoBack() {
+        uiState.postValue("goback")
+        plugPag.disposeSubscriber()
+        plugPag.unbindService()
+    }
+
 
     private fun getCustomPrinterDialog(): PlugPagCustomPrinterLayout {
         val customDialog = PlugPagCustomPrinterLayout()

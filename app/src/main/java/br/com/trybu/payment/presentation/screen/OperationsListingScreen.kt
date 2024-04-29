@@ -135,7 +135,7 @@ fun OperationCard(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 64.dp)
+                    .padding(start = 24.dp, end = 24.dp, bottom = 16.dp, top = 0.dp)
             ) {
                 operation.transactionsTypes.forEach { transactionType ->
                     // Text(text = it.htmlString.toAnnotatedString(), style = Subtitle2)

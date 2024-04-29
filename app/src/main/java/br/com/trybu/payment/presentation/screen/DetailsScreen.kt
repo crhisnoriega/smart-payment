@@ -63,11 +63,12 @@ fun DetailsScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(start = 24.dp, end = 24.dp, top = 60.dp, bottom = 24.dp),
+                .padding(start = 34.dp, end = 24.dp, top = 60.dp, bottom = 24.dp),
             verticalArrangement = Arrangement.SpaceBetween
         )
         {
             Column(modifier = Modifier.fillMaxWidth()) {
+                Text(text = "${transactionType.paymentType.toPaymentType()} R$ ${transactionType.value}")
                 Text(text = transactionType.htmlString.toAnnotatedString())
             }
 

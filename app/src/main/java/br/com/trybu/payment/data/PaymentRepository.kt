@@ -1,6 +1,7 @@
 package br.com.trybu.payment.data
 
 import br.com.trybu.payment.api.SmartPaymentAPI
+import br.com.trybu.payment.data.model.PaymentConfirmRequest
 import br.com.trybu.payment.data.model.RetrieveKeyRequest
 import br.com.trybu.payment.data.model.RetrieveOperationsRequest
 import br.com.trybu.payment.data.model.RetrieveOperationsResponse
@@ -32,13 +33,27 @@ class PaymentRepository @Inject constructor(
 
         val joined = mutableListOf<RetrieveOperationsResponse.Operation.TransactionType>()
         response.body()?.operations?.forEach {
-            joined.add(RetrieveOperationsResponse.Operation.TransactionType(
-                htmlString = it.htmlString,
-                isHeader = true
-            ))
+            joined.add(
+                RetrieveOperationsResponse.Operation.TransactionType(
+                    htmlString = it.htmlString,
+                    isHeader = true
+                )
+            )
             joined.addAll(it.transactionsTypes)
         }
 
         emit(response.body()?.operations)
+    }
+
+    suspend fun confirmPayment(transactionId: String, jsonTransaction: String, key: String) = flow {
+        val response = smartPaymentAPI.paymentConfirm(
+            PaymentConfirmRequest(
+                transactionId = transactionId,
+                jsonRaw = jsonTransaction,
+                key = key
+
+            )
+        )
+        emit(response)
     }
 }
