@@ -50,6 +50,7 @@ fun DetailsScreen(
 
     LaunchedEffect(Unit) {
         viewModel.doPayment(transactionType)
+
     }
 
     AppScaffold(
@@ -67,8 +68,7 @@ fun DetailsScreen(
             verticalArrangement = Arrangement.SpaceBetween
         )
         {
-            Column(modifier = Modifier.fillMaxWidth()) {
-                Text(text = "${transactionType.paymentType.toPaymentType()} R$ ${transactionType.value}")
+            Column(modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp)) {
                 Text(text = transactionType.htmlString.toAnnotatedString())
             }
 

@@ -14,11 +14,13 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.core.text.HtmlCompat
+import br.com.trybu.payment.data.model.RetrieveOperationsResponse
 
-fun Int?.toPaymentType() = when(this){
-    2 -> "Credito Parcelado - "
-    3 -> "Credito - "
-    4 -> "Debito - "
+fun RetrieveOperationsResponse.Operation.TransactionType.toPaymentType() = when {
+    this.paymentType == 2 && this.installmentsNumber == 1 -> "Credito - "
+    this.paymentType == 2 -> "Credito Parcelado ${this.installmentsNumber}x\n"
+    this.paymentType == 3 -> "Credito - "
+    this.paymentType == 4 -> "Debito - "
     else -> "Debito - "
 }
 

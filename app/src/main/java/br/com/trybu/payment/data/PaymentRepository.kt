@@ -1,7 +1,7 @@
 package br.com.trybu.payment.data
 
 import br.com.trybu.payment.api.SmartPaymentAPI
-import br.com.trybu.payment.data.model.PaymentConfirmRequest
+import br.com.trybu.payment.data.model.ConfirmRequest
 import br.com.trybu.payment.data.model.RetrieveKeyRequest
 import br.com.trybu.payment.data.model.RetrieveOperationsRequest
 import br.com.trybu.payment.data.model.RetrieveOperationsResponse
@@ -47,11 +47,22 @@ class PaymentRepository @Inject constructor(
 
     suspend fun confirmPayment(transactionId: String, jsonTransaction: String, key: String) = flow {
         val response = smartPaymentAPI.paymentConfirm(
-            PaymentConfirmRequest(
+            ConfirmRequest(
                 transactionId = transactionId,
                 jsonRaw = jsonTransaction,
                 key = key
 
+            )
+        )
+        emit(response)
+    }
+
+    suspend fun confirmRefund(transactionId: String, jsonTransaction: String, key: String) = flow {
+        val response = smartPaymentAPI.refundConfirm(
+            ConfirmRequest(
+                transactionId = transactionId,
+                jsonRaw = jsonTransaction,
+                key = key
             )
         )
         emit(response)

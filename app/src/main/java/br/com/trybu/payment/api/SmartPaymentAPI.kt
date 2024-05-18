@@ -1,6 +1,6 @@
 package br.com.trybu.payment.api
 
-import br.com.trybu.payment.data.model.PaymentConfirmRequest
+import br.com.trybu.payment.data.model.ConfirmRequest
 import br.com.trybu.payment.data.model.RetrieveKeyRequest
 import br.com.trybu.payment.data.model.RetrieveKeyResponse
 import br.com.trybu.payment.data.model.RetrieveOperationsRequest
@@ -27,5 +27,9 @@ interface SmartPaymentAPI {
 
     @POST("ConfirmarPagamentoPOS")
     @Headers("Content-Type: application/json")
-    suspend fun paymentConfirm(@Body paymentConfirmRequest: PaymentConfirmRequest): Response<JsonElement>
+    suspend fun paymentConfirm(@Body paymentConfirmRequest: ConfirmRequest): Response<JsonElement>
+
+    @POST("ConfirmarCancelamentoPOS")
+    @Headers("Content-Type: application/json")
+    suspend fun refundConfirm(@Body paymentConfirmRequest: ConfirmRequest): Response<JsonElement>
 }

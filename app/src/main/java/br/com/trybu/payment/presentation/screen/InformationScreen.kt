@@ -135,7 +135,7 @@ fun InformationContent(
                 .align(alignment = Alignment.Start)
         ) {
             Spacer(modifier = Modifier.height(16.dp))
-            Text(text = "Digite CPF, número de contrato para localizar a venda", style = Title2.copy(fontSize = 18.sp), color = Color.Black)
+            Text(text = "Digite o CPF ou número de contrato para localizar a venda", style = Title2.copy(fontSize = 18.sp), color = Color.Black)
             AppTextField(
                 value = query,
                 onValueChange = { query = it },

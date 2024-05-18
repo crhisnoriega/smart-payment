@@ -30,6 +30,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.text.HtmlCompat
 import br.com.trybu.payment.R
@@ -135,7 +136,8 @@ fun OperationCard(
                         }) {
                         Column(verticalArrangement = Arrangement.Center) {
                             Text(
-                                text = "${transactionType.paymentType.toPaymentType()} R$ ${transactionType.value}"
+                                text = "${transactionType.toPaymentType()} R$ ${transactionType.value}",
+                                textAlign = TextAlign.Center
                             )
                         }
                     }

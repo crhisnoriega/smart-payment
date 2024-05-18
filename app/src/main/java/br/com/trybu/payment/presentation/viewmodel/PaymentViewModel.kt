@@ -1,5 +1,6 @@
 package br.com.trybu.payment.presentation.viewmodel
 
+import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
@@ -27,14 +28,15 @@ import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPagEventData
 import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPagEventListener
 import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPagPaymentData
 import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPagTransactionResult
+import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPagVoidData
 import br.com.uol.pagseguro.plugpagservice.wrapper.data.request.PlugPagBeepData
 import com.google.gson.Gson
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.math.BigDecimal
-import java.util.UUID
 import javax.inject.Inject
 
 
@@ -47,6 +49,7 @@ class PaymentViewModel @Inject constructor(
     private val transactionDB: TransactionDB,
     private val paymentRepository: PaymentRepository,
     private val keyRepository: KeyRepository,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
 
     var uiState = MutableLiveData<String>()
@@ -68,7 +71,7 @@ class PaymentViewModel @Inject constructor(
             }
 
             var transaction = Transaction(
-                id = UUID.randomUUID().toString(),
+                id = operation.transactionId ?: "",
                 createDate = currentDate(),
                 lastUpdate = currentDate(),
                 status = Status.CREATED
@@ -154,8 +157,9 @@ class PaymentViewModel @Inject constructor(
                     updateTransactionAsSuccess(transaction, result)
                     state = state.copy(paymentState = "ENVIADO COM SUCESSO")
                     Handler(Looper.getMainLooper()).postDelayed({
-                        stopServiceAndGoBack()
-                    }, 1000)
+                        //stopServiceAndGoBack()
+                        refund(transaction, result)
+                    }, 5000)
                 }
 
                 is Resources.Error -> {
@@ -212,5 +216,47 @@ class PaymentViewModel @Inject constructor(
         }
     }
 
+    fun refund(transaction: Transaction, result: PlugPagTransactionResult) =
+        CoroutineScope(Dispatchers.IO).launch {
+            var plugPag = PlugPag(context)
+            plugPag.setEventListener(object : PlugPagEventListener {
+                override fun onEvent(data: PlugPagEventData) {
+                    Log.i(
+                        "log", "eventCode: ${data.eventCode} customMessage: ${data.customMessage}"
+                    )
+                    if (transactionFinished) return
+
+                    state = when (data.eventCode) {
+                        in TRANSACTION_FINAL_STATES -> {
+                            transactionFinished = true
+                            state.copy(
+                                paymentState = data.customMessage
+                            )
+                        }
+
+                        else -> state.copy(paymentState = data.customMessage)
+                    }
+
+                }
+            })
+            val resultRefund = plugPag.voidPayment(
+                PlugPagVoidData(
+                    transactionId = result.transactionId ?: "",
+                    transactionCode = result.transactionCode ?: ""
+                )
+            )
+
+            Log.i("log", "result: ${Gson().toJson(resultRefund)}")
+
+            safeAPICall {
+                paymentRepository.confirmRefund(
+                    transactionId = transaction.id,
+                    jsonTransaction = Gson().toJson(resultRefund),
+                    key = keyRepository.retrieveKey() ?: ""
+                )
+            }.collect {
+
+            }
+        }
 
 }
