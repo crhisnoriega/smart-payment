@@ -248,7 +248,8 @@ class PaymentViewModel @Inject constructor(
             )
         )
 
-        Log.i("log", "result: ${Gson().toJson(resultRefund)}")
+
+        updateStateWithResult(resultRefund)
 
         safeAPICall {
             paymentRepository.confirmRefund(
@@ -257,7 +258,10 @@ class PaymentViewModel @Inject constructor(
                 key = keyRepository.retrieveKey() ?: ""
             )
         }.collect {
-
+            when (it) {
+                is Resources.Success<*> -> persistResult(transaction, result)
+                else -> {}
+            }
         }
     }
 }
