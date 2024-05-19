@@ -38,6 +38,7 @@ import br.com.trybu.ui.widget.loading.LoadablePrimaryButton
 fun DetailsScreen(
     viewModel: PaymentViewModel,
     transactionType: RetrieveOperationsResponse.Operation.TransactionType,
+    isRefund: Boolean,
     goBack: () -> Unit
 ) {
 
@@ -49,7 +50,12 @@ fun DetailsScreen(
     }
 
     LaunchedEffect(Unit) {
-        viewModel.doPayment(transactionType)
+        if (isRefund) {
+            viewModel.doRefund(transactionType.transactionId)
+        } else {
+            viewModel.doPayment(transactionType)
+        }
+
 
     }
 
@@ -68,7 +74,11 @@ fun DetailsScreen(
             verticalArrangement = Arrangement.SpaceBetween
         )
         {
-            Column(modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp)) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 24.dp)
+            ) {
                 Text(text = transactionType.htmlString.toAnnotatedString())
             }
 

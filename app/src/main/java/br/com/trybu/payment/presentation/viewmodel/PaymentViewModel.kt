@@ -157,8 +157,7 @@ class PaymentViewModel @Inject constructor(
                     updateTransactionAsSuccess(transaction, result)
                     state = state.copy(paymentState = "ENVIADO COM SUCESSO")
                     Handler(Looper.getMainLooper()).postDelayed({
-                        //stopServiceAndGoBack()
-                        refund(transaction, result)
+                        stopServiceAndGoBack()
                     }, 5000)
                 }
 
@@ -216,47 +215,49 @@ class PaymentViewModel @Inject constructor(
         }
     }
 
-    fun refund(transaction: Transaction, result: PlugPagTransactionResult) =
-        CoroutineScope(Dispatchers.IO).launch {
-            var plugPag = PlugPag(context)
-            plugPag.setEventListener(object : PlugPagEventListener {
-                override fun onEvent(data: PlugPagEventData) {
-                    Log.i(
-                        "log", "eventCode: ${data.eventCode} customMessage: ${data.customMessage}"
-                    )
-                    if (transactionFinished) return
+    fun doRefund(transactionId: String?) = CoroutineScope(Dispatchers.IO).launch {
+        val transaction = transactionDB.transactionDao().findTransaction(transactionId ?: "")
+            ?: throw Exception("don't found local transaction")
+        val result =
+            Gson().fromJson(transaction.jsonTransaction, PlugPagTransactionResult::class.java)
 
-                    state = when (data.eventCode) {
-                        in TRANSACTION_FINAL_STATES -> {
-                            transactionFinished = true
-                            state.copy(
-                                paymentState = data.customMessage
-                            )
-                        }
+        plugPag.setEventListener(object : PlugPagEventListener {
+            override fun onEvent(data: PlugPagEventData) {
+                Log.i(
+                    "log", "eventCode: ${data.eventCode} customMessage: ${data.customMessage}"
+                )
+                if (transactionFinished) return
 
-                        else -> state.copy(paymentState = data.customMessage)
+                state = when (data.eventCode) {
+                    in TRANSACTION_FINAL_STATES -> {
+                        transactionFinished = true
+                        state.copy(
+                            paymentState = data.customMessage
+                        )
                     }
 
+                    else -> state.copy(paymentState = data.customMessage)
                 }
-            })
-            val resultRefund = plugPag.voidPayment(
-                PlugPagVoidData(
-                    transactionId = result.transactionId ?: "",
-                    transactionCode = result.transactionCode ?: ""
-                )
-            )
-
-            Log.i("log", "result: ${Gson().toJson(resultRefund)}")
-
-            safeAPICall {
-                paymentRepository.confirmRefund(
-                    transactionId = transaction.id,
-                    jsonTransaction = Gson().toJson(resultRefund),
-                    key = keyRepository.retrieveKey() ?: ""
-                )
-            }.collect {
 
             }
-        }
+        })
+        val resultRefund = plugPag.voidPayment(
+            PlugPagVoidData(
+                transactionId = result.transactionId ?: "",
+                transactionCode = result.transactionCode ?: ""
+            )
+        )
 
+        Log.i("log", "result: ${Gson().toJson(resultRefund)}")
+
+        safeAPICall {
+            paymentRepository.confirmRefund(
+                transactionId = transaction.id,
+                jsonTransaction = Gson().toJson(resultRefund),
+                key = keyRepository.retrieveKey() ?: ""
+            )
+        }.collect {
+
+        }
+    }
 }

@@ -77,12 +77,14 @@ fun OperationsListingScreen(
                     .fillMaxSize()
                     .padding(top = 60.dp)
             ) {
-                items(state.operations) {
-                    OperationCard(operation = it) {
-                        val routeStr = Routes.payment.details.replace(
-                            "{operation}",
-                            Uri.encode(Gson().toJson(it))
-                        )
+                items(state.operations) { item ->
+                    OperationCard(operation = item) { selection ->
+                        val routeStr = Routes.payment.details
+                            .replace(
+                                "{operation}",
+                                Uri.encode(Gson().toJson(selection))
+                            )
+                            .replace("{isRefund}", item.isRefund.toString())
                         route(routeStr)
                     }
                 }
