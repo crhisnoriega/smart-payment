@@ -138,7 +138,7 @@ fun OperationCard(
                         }) {
                         Column(verticalArrangement = Arrangement.Center) {
                             Text(
-                                text = if (operation.isRefund == true) "Cancelar" else "${transactionType.toPaymentType()} R$ ${transactionType.value}",
+                                text = "${if (operation.isRefund == true) "Cancelar " else ""}${transactionType.toPaymentType()} R$ ${transactionType.value}",
                                 textAlign = TextAlign.Center
                             )
                         }

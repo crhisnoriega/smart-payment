@@ -1,5 +1,6 @@
 package br.com.trybu.payment.db
 
+import android.util.Log
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
@@ -13,7 +14,7 @@ abstract class TransactionDao {
     abstract fun findTransaction(id: String): Transaction?
 
     @Insert
-    abstract fun insertTransaction(transaction: Transaction)
+    abstract fun insertTransaction(transaction: Transaction): Long
 
     @Update
     abstract fun updateTransaction(transaction: Transaction)
@@ -24,6 +25,10 @@ abstract class TransactionDao {
     fun insertOrUpdateTransaction(transaction: Transaction) {
         findTransaction(transaction.id)?.let {
             updateTransaction(transaction)
+            Log.i("log", "updated")
+        } ?: run {
+            val result = insertTransaction(transaction)
+            Log.i("log", "result: $result id: ${transaction.id}")
         }
     }
 }

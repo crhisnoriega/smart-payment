@@ -216,52 +216,61 @@ class PaymentViewModel @Inject constructor(
     }
 
     fun doRefund(transactionId: String?) = CoroutineScope(Dispatchers.IO).launch {
-        val transaction = transactionDB.transactionDao().findTransaction(transactionId ?: "")
-            ?: throw Exception("don't found local transaction")
-        val result =
-            Gson().fromJson(transaction.jsonTransaction, PlugPagTransactionResult::class.java)
 
-        plugPag.setEventListener(object : PlugPagEventListener {
-            override fun onEvent(data: PlugPagEventData) {
-                Log.i(
-                    "log", "eventCode: ${data.eventCode} customMessage: ${data.customMessage}"
-                )
-                if (transactionFinished) return
+        try {
+            val transaction = transactionDB.transactionDao().findTransaction(transactionId ?: "")
+                ?: throw Exception("don't found local transaction")
+            val result =
+                Gson().fromJson(transaction.jsonTransaction, PlugPagTransactionResult::class.java)
 
-                state = when (data.eventCode) {
-                    in TRANSACTION_FINAL_STATES -> {
-                        transactionFinished = true
-                        state.copy(
-                            paymentState = data.customMessage
-                        )
+            state =
+                state.copy(paymentState = "PROCESSANDO")
+
+            plugPag.setEventListener(object : PlugPagEventListener {
+                override fun onEvent(data: PlugPagEventData) {
+                    Log.i(
+                        "log", "eventCode: ${data.eventCode} customMessage: ${data.customMessage}"
+                    )
+                    if (transactionFinished) return
+
+                    state = when (data.eventCode) {
+                        in TRANSACTION_FINAL_STATES -> {
+                            transactionFinished = true
+                            state.copy(
+                                paymentState = data.customMessage
+                            )
+                        }
+
+                        else -> state.copy(paymentState = data.customMessage)
                     }
 
-                    else -> state.copy(paymentState = data.customMessage)
                 }
+            })
 
-            }
-        })
-        val resultRefund = plugPag.voidPayment(
-            PlugPagVoidData(
-                transactionId = result.transactionId ?: "",
-                transactionCode = result.transactionCode ?: ""
+            val resultRefund = plugPag.voidPayment(
+                PlugPagVoidData(
+                    transactionId = result.transactionId ?: "",
+                    transactionCode = result.transactionCode ?: ""
+                )
             )
-        )
 
+            updateStateWithResult(resultRefund)
 
-        updateStateWithResult(resultRefund)
-
-        safeAPICall {
-            paymentRepository.confirmRefund(
-                transactionId = transaction.id,
-                jsonTransaction = Gson().toJson(resultRefund),
-                key = keyRepository.retrieveKey() ?: ""
-            )
-        }.collect {
-            when (it) {
-                is Resources.Success<*> -> persistResult(transaction, result)
-                else -> {}
+            safeAPICall {
+                paymentRepository.confirmRefund(
+                    transactionId = transaction.id,
+                    jsonTransaction = Gson().toJson(resultRefund),
+                    key = keyRepository.retrieveKey() ?: ""
+                )
+            }.collect {
+                when (it) {
+                    is Resources.Success<*> -> persistResult(transaction, result)
+                    else -> {}
+                }
             }
+        } catch (e: Exception) {
+            Log.i("log", e.message, e)
+            state = state.copy(paymentState = "Erro inesperado, por favor tente mais tarde")
         }
     }
 }

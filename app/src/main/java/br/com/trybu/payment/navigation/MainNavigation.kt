@@ -45,7 +45,7 @@ fun MainNavigation(
 
         composable(route = Routes.payment.details) { entry ->
             val jsonRaw = entry.arguments?.getString("operation")
-            val isRefund = entry.arguments?.getBoolean("isRefund")
+            val isRefund = entry.arguments?.getString("isRefund")
             val transactionType =
                 Gson().fromJson(
                     jsonRaw,
@@ -54,7 +54,7 @@ fun MainNavigation(
             DetailsScreen(
                 viewModel = hiltViewModel(),
                 transactionType = transactionType,
-                isRefund = isRefund ?: false
+                isRefund = isRefund.toBoolean() ?: false
             ) {
                 controller.popBackStack()
             }

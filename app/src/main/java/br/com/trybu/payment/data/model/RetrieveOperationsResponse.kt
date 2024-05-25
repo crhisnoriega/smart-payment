@@ -9,7 +9,7 @@ data class RetrieveOperationsResponse(
 ) {
 
     data class Operation(
-        @SerializedName("Cancalamento") val isRefund: Boolean?,
+        @SerializedName("Cancelamento") val isRefund: Boolean?,
         @SerializedName("Cobranca") val isPayment: Boolean?,
         @SerializedName("Html") val htmlString: String?,
         @SerializedName("Itens") val transactionsTypes: List<TransactionType>

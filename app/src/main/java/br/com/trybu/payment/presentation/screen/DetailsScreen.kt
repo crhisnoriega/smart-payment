@@ -55,8 +55,6 @@ fun DetailsScreen(
         } else {
             viewModel.doPayment(transactionType)
         }
-
-
     }
 
     AppScaffold(
@@ -74,11 +72,15 @@ fun DetailsScreen(
             verticalArrangement = Arrangement.SpaceBetween
         )
         {
+
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 24.dp)
             ) {
+                if (isRefund) {
+                    Text(text = "Devolução", modifier = Modifier.padding(bottom = 24.dp))
+                }
                 Text(text = transactionType.htmlString.toAnnotatedString())
             }
 
