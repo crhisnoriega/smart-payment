@@ -32,17 +32,22 @@ class PaymentRepository @Inject constructor(
         )
 
         val joined = mutableListOf<RetrieveOperationsResponse.Operation.TransactionType>()
-        response.body()?.operations?.forEach {
-            joined.add(
-                RetrieveOperationsResponse.Operation.TransactionType(
-                    htmlString = it.htmlString,
-                    isHeader = true
-                )
-            )
-            joined.addAll(it.transactionsTypes)
-        }
+        if (response.body()?.errors?.isEmpty() == false) {
+            throw Exception(response.body()?.errors?.first()?.errorDescription)
+        } else {
 
-        emit(response.body()?.operations)
+            response.body()?.operations?.forEach {
+                joined.add(
+                    RetrieveOperationsResponse.Operation.TransactionType(
+                        htmlString = it.htmlString,
+                        isHeader = true
+                    )
+                )
+                joined.addAll(it.transactionsTypes)
+            }
+
+            emit(response.body()?.operations)
+        }
     }
 
     suspend fun confirmPayment(transactionId: String, jsonTransaction: String, key: String) = flow {
@@ -63,6 +68,17 @@ class PaymentRepository @Inject constructor(
                 transactionId = transactionId,
                 jsonRaw = jsonTransaction,
                 key = key
+            )
+        )
+        emit(response)
+    }
+
+    suspend fun startPayment(transactionId: String?, key: String?) = flow {
+        val response = smartPaymentAPI.startPayment(
+            ConfirmRequest(
+                transactionId = transactionId ?: "",
+                jsonRaw = null,
+                key = key ?: ""
             )
         )
         emit(response)

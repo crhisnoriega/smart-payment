@@ -51,8 +51,7 @@ class PaymentViewModel @Inject constructor(
     private val plugPag: PlugPag,
     private val transactionDB: TransactionDB,
     private val paymentRepository: PaymentRepository,
-    private val keyRepository: KeyRepository,
-    @ApplicationContext private val context: Context
+    private val keyRepository: KeyRepository
 ) : ViewModel() {
 
     var uiState = MutableLiveData<String>()
@@ -71,9 +70,17 @@ class PaymentViewModel @Inject constructor(
         CoroutineScope(Dispatchers.IO).launch {
             Log.i("log", "start: ${operation.transactionId}")
 
+            paymentRepository.startPayment(
+                operation.transactionId,
+                key = keyRepository.retrieveKey()
+            ).collect {
+                Log.i("log", "start payment")
+            }
+
             if (plugPag.isServiceBusy()) {
                 abort()
             }
+
 
             var transaction = Transaction(
                 id = operation.transactionId ?: "",
@@ -160,15 +167,24 @@ class PaymentViewModel @Inject constructor(
     }
 
     private suspend fun sendTransactionResult(
-        transaction: Transaction
+        transaction: Transaction,
+        isRefund: Boolean? = false
     ) {
         state = state.copy(paymentState = "ENVIANDO...")
         safeAPICall {
-            paymentRepository.confirmPayment(
-                transactionId = transaction.id,
-                jsonTransaction = transaction.jsonTransaction ?: "",
-                key = keyRepository.retrieveKey() ?: ""
-            )
+            if (isRefund == false) {
+                paymentRepository.confirmPayment(
+                    transactionId = transaction.id,
+                    jsonTransaction = transaction.jsonTransaction ?: "",
+                    key = keyRepository.retrieveKey() ?: ""
+                )
+            } else {
+                paymentRepository.confirmRefund(
+                    transactionId = transaction.id,
+                    jsonTransaction = transaction.jsonTransaction ?: "",
+                    key = keyRepository.retrieveKey() ?: ""
+                )
+            }
         }.collect {
             when (it) {
                 is Resources.Success<*> -> {
@@ -269,27 +285,25 @@ class PaymentViewModel @Inject constructor(
                 }
             })
 
-            val resultRefund = plugPag.voidPayment(
+            val plugPagResultRefund = plugPag.voidPayment(
                 PlugPagVoidData(
                     transactionId = result.transactionId ?: "",
                     transactionCode = result.transactionCode ?: ""
                 )
             )
 
-            updateStateWithResult(resultRefund)
+            updateStateWithResult(plugPagResultRefund)
 
-            safeAPICall {
-                paymentRepository.confirmRefund(
-                    transactionId = transaction.id,
-                    jsonTransaction = transaction.jsonTransaction ?: "",
-                    key = keyRepository.retrieveKey() ?: ""
+            transaction =
+                transaction.copy(
+                    transactionStatus = if (plugPagResultRefund.result != 0) TransactionStatus.REJECTED else TransactionStatus.APPROVED,
+                    jsonTransaction = Gson().toJson(plugPagResultRefund).replace("\\u", ""),
+                    transactionType = TransactionType.REFUND
                 )
-            }.collect {
-                when (it) {
-                    is Resources.Success<*> -> sendAndPersistTransaction(transaction)
-                    else -> {}
-                }
-            }
+
+            updateTransactionAsStatus(transaction, Status.PROCESSED)
+
+            sendTransactionResult(transaction, isRefund = true)
         } catch (e: Exception) {
             Log.i("log", e.message, e)
             state = state.copy(paymentState = "Erro inesperado, por favor tente mais tarde")

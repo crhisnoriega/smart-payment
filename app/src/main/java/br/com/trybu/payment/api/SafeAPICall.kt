@@ -18,12 +18,12 @@ suspend inline fun <T> safeAPICall(
             when (throwable) {
                 is HttpException -> {
                     when (throwable.code()) {
-                        400, 401 -> emit(Resources.Error(throwable))
+                        400, 401 -> emit(Resources.Error(throwable, throwable.message))
                     }
                 }
 
                 else -> {
-                    emit(Resources.Error(throwable))
+                    emit(Resources.Error(throwable, throwable.message))
                 }
             }
 
@@ -35,5 +35,5 @@ suspend inline fun <T> safeAPICall(
 sealed class Resources {
     object Loading : Resources()
     data class Success<T>(val data: T) : Resources()
-    data class Error(val error: Throwable) : Resources()
+    data class Error(val error: Throwable, val message: String?) : Resources()
 }

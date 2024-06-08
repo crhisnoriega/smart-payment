@@ -49,7 +49,7 @@ class OperationInfoViewModel @Inject constructor(
 
 
     fun retrieveOperations(document: String) = viewModelScope.launch {
-        state = state.copy(operations = listOf(), isLoading = true)
+        state = state.copy(operations = listOf(), isLoading = true, error = null)
         safeAPICall {
             paymentRepository.retrieveOperations(
                 keyRepository.retrieveKey(), document
@@ -68,7 +68,8 @@ class OperationInfoViewModel @Inject constructor(
                     state.copy(
                         error = it.error.message,
                         currentTransactionId = null,
-                        operations = null
+                        operations = null,
+                        isLoading = false
                     )
 
                 is Resources.Loading -> {

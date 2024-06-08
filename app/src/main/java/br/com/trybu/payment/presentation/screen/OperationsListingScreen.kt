@@ -31,6 +31,7 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.text.HtmlCompat
 import br.com.trybu.payment.R
@@ -40,8 +41,12 @@ import br.com.trybu.payment.presentation.viewmodel.OperationInfoViewModel
 import br.com.trybu.payment.presentation.viewmodel.PaymentViewModel
 import br.com.trybu.payment.util.toAnnotatedString
 import br.com.trybu.payment.util.toPaymentType
+import br.com.trybu.ui.theme.AppTheme
+import br.com.trybu.ui.theme.Body2
 import br.com.trybu.ui.theme.Subtitle2
+import br.com.trybu.ui.theme.Title2
 import br.com.trybu.ui.theme.blue_500
+import br.com.trybu.ui.theme.danger_700
 import br.com.trybu.ui.widget.AppScaffold
 import br.com.trybu.ui.widget.AppTopBar
 import br.com.trybu.ui.widget.button.PrimaryButton
@@ -69,9 +74,10 @@ fun OperationsListingScreen(
             }
         }
     ) {
+
         when {
             state.isLoading == true -> LoadingFullScreen()
-            state.operations == null -> EmptyList()
+            state.operations == null -> EmptyList(message = state.error ?: "")
             state.operations != null && state.operations.isNotEmpty() == true -> LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
@@ -89,6 +95,7 @@ fun OperationsListingScreen(
                     }
                 }
             }
+
         }
     }
 }
@@ -125,6 +132,17 @@ fun OperationCard(
                 )
             }
 
+            if (operation.isRequestPayment == true) {
+                Text(
+                    text = "Pagamento de regularização",
+                    style = Subtitle2.copy(color = danger_700),
+                    modifier = Modifier
+                        .padding(bottom = 20.dp)
+                        .fillMaxWidth(),
+                    textAlign = TextAlign.Center
+                )
+            }
+
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -149,3 +167,21 @@ fun OperationCard(
     }
 }
 
+
+@Preview
+@Composable
+fun PreviewOperationCard() {
+    AppTheme {
+        OperationCard(
+            operation = RetrieveOperationsResponse.Operation(
+                isRefund = false,
+                isRequestPayment = true,
+                htmlString = "<p style='text-align: center;'><b>Crédito<\\/b><br\\/><b>Valor: <\\/b> R\$ 30,98 <\\/p><p style='text-align: center;'><b>Crédito<\\/b><br\\/><b>Valor: <\\/b> R\$ 30,98 <\\/p>",
+                transactionsTypes = listOf()
+            )
+        ) {
+
+        }
+
+    }
+}
