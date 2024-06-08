@@ -21,6 +21,10 @@ suspend inline fun <T> safeAPICall(
                         400, 401 -> emit(Resources.Error(throwable))
                     }
                 }
+
+                else -> {
+                    emit(Resources.Error(throwable))
+                }
             }
 
         }.collect {

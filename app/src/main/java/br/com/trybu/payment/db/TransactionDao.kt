@@ -7,6 +7,7 @@ import androidx.room.Query
 import androidx.room.Update
 import br.com.trybu.payment.db.entity.Status
 import br.com.trybu.payment.db.entity.Transaction
+import br.com.trybu.payment.db.entity.TransactionStatus
 
 @Dao
 abstract class TransactionDao {
@@ -23,16 +24,17 @@ abstract class TransactionDao {
     @Query("SELECT * FROM `transaction`")
     abstract fun getTransactions(): List<Transaction>
 
-    @Query("SELECT * FROM `transaction` WHERE  status != :status")
-    abstract fun pendingTransaction(status: Status): List<Transaction>
+    @Query("SELECT * FROM `transaction` WHERE  status = :status and transactionStatus = :transactionStatus")
+    abstract fun pendingTransaction(
+        status: Status,
+        transactionStatus: TransactionStatus
+    ): List<Transaction>
 
     fun insertOrUpdateTransaction(transaction: Transaction) {
         findTransaction(transaction.id)?.let {
             updateTransaction(transaction)
-            Log.i("log", "updated")
         } ?: run {
-            val result = insertTransaction(transaction)
-            Log.i("log", "result: $result id: ${transaction.id}")
+            insertTransaction(transaction)
         }
     }
 }

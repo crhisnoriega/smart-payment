@@ -13,6 +13,8 @@ import br.com.trybu.payment.data.PaymentRepository
 import br.com.trybu.payment.data.model.ConfirmRequest
 import br.com.trybu.payment.db.TransactionDB
 import br.com.trybu.payment.db.entity.Status
+import br.com.trybu.payment.db.entity.Transaction
+import br.com.trybu.payment.db.entity.TransactionStatus
 import br.com.trybu.payment.di.RemoteModule
 import javax.inject.Inject
 
@@ -20,36 +22,51 @@ import javax.inject.Inject
 class CheckTransactionsWorker @Inject constructor(
     private val appContext: Context,
     workerParams: WorkerParameters
-) :
-    CoroutineWorker(appContext, workerParams) {
-
+) : CoroutineWorker(appContext, workerParams) {
 
     private var smartPaymentAPI = RemoteModule.provideRetrofit().create(SmartPaymentAPI::class.java)
 
     override suspend fun doWork(): Result {
         try {
-            Log.i("log", "repository: $smartPaymentAPI")
-            val database = Room.databaseBuilder(
+            val transactionDAO = Room.databaseBuilder(
                 appContext,
                 TransactionDB::class.java, "database-name"
-            ).build()
+            ).build().transactionDao()
 
-            val transaction = database.transactionDao().pendingTransaction(Status.PENDING).first()
-            Log.i("log", "pending: ${transaction}")
-
-            smartPaymentAPI.paymentConfirm(
-                ConfirmRequest(
-                    transactionId = transaction.id,
-                    jsonRaw = transaction.jsonTransaction ?: "",
-                    key = transaction.id
-                )
+            val pendingTransactions = transactionDAO.pendingTransaction(
+                status = Status.PENDING_SEND,
+                transactionStatus = TransactionStatus.APPROVED
             )
-        } catch (e: Exception) {
+
+            Log.i("log", "was found: ${pendingTransactions.size} pending transactions")
+
+            pendingTransactions.forEach { transaction ->
+                try {
+                    sendTransaction(transaction)
+                    transactionDAO.insertTransaction(transaction.copy(status = Status.ACK_SEND))
+                } catch (e: Throwable) {
+                    transactionDAO.insertTransaction(transaction.copy(status = Status.PENDING_SEND))
+                }
+            }
+
+
+        } catch (e: Throwable) {
             Log.i("log", e.message, e)
         }
 
 
         return Result.success()
+    }
+
+
+    private suspend fun sendTransaction(transaction: Transaction) {
+        smartPaymentAPI.paymentConfirm(
+            ConfirmRequest(
+                transactionId = transaction.id,
+                jsonRaw = transaction.jsonTransaction ?: "",
+                key = transaction.id
+            )
+        )
     }
 
     companion object {
