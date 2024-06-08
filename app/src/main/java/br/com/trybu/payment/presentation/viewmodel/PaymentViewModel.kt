@@ -21,6 +21,7 @@ import br.com.trybu.payment.db.entity.Transaction
 import br.com.trybu.payment.db.entity.currentDate
 import br.com.trybu.payment.util.PaymentConstants.INSTALLMENT_TYPE_A_VISTA
 import br.com.trybu.payment.util.PaymentConstants.TYPE_CREDITO
+import br.com.trybu.payment.util.PaymentConstants.TYPE_DEBITO
 import br.com.trybu.payment.util.PaymentConstants.USER_REFERENCE
 import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPag
 import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPagCustomPrinterLayout
@@ -104,10 +105,10 @@ class PaymentViewModel @Inject constructor(
 
             val result = plugPag.doPayment(
                 PlugPagPaymentData(
-                    type = TYPE_CREDITO,
+                    type = if (operation.paymentType == 0) TYPE_CREDITO else TYPE_DEBITO,
                     amount = operation.value?.multiply(BigDecimal(100))?.toInt() ?: -1,
                     installmentType = INSTALLMENT_TYPE_A_VISTA,
-                    installments = 1,
+                    installments = operation.installmentsNumber ?: 1,
                     userReference = USER_REFERENCE,
                     printReceipt = false,
                     partialPay = false,

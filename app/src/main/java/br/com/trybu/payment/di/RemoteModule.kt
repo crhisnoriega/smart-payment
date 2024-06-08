@@ -66,8 +66,11 @@ object RemoteModule {
 
     @Singleton
     @Provides
-    fun database(@ApplicationContext context: Context) = Room.databaseBuilder(
+    fun provideDatabase(@ApplicationContext context: Context) = Room.databaseBuilder(
         context,
         TransactionDB::class.java, "database-name"
     ).build()
+
+    @Provides
+    fun provideTransactionDAO(transactionDB: TransactionDB) = transactionDB.transactionDao()
 }

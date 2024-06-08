@@ -1,5 +1,6 @@
 package br.com.trybu.payment.presentation.viewmodel
 
+import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
@@ -17,6 +18,7 @@ import br.com.trybu.payment.data.model.RetrieveOperationsResponse
 import br.com.trybu.payment.util.PaymentConstants.INSTALLMENT_TYPE_A_VISTA
 import br.com.trybu.payment.util.PaymentConstants.TYPE_CREDITO
 import br.com.trybu.payment.util.PaymentConstants.USER_REFERENCE
+import br.com.trybu.payment.worker.CheckTransactionsWorker
 import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPag
 import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPagCustomPrinterLayout
 import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPagEventData
@@ -24,6 +26,7 @@ import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPagEventListener
 import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPagPaymentData
 import br.com.uol.pagseguro.plugpagservice.wrapper.data.request.PlugPagBeepData
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.catch
@@ -34,6 +37,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class OperationInfoViewModel @Inject constructor(
+    @ApplicationContext val context: Context,
     private val paymentRepository: PaymentRepository,
     private val keyRepository: KeyRepository,
 
@@ -91,6 +95,8 @@ class OperationInfoViewModel @Inject constructor(
                 Handler(Looper.getMainLooper()).postDelayed({
                     state = state.copy(showInfo = false)
                 }, 3000)
+
+                CheckTransactionsWorker.startWorker(context)
             }
     }
 
