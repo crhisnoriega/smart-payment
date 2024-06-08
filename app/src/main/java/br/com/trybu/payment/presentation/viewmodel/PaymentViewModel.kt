@@ -58,93 +58,6 @@ class PaymentViewModel @Inject constructor(
     var state by mutableStateOf(UIState(operations = listOf()))
     private var transactionFinished = false
 
-    fun doPayment(operation: RetrieveOperationsResponse.Operation.TransactionType) {
-
-        Log.i("log", "transaction: ${Gson().toJson(operation)}")
-
-        if (state.currentTransactionId != null) return
-        state =
-            state.copy(currentTransactionId = operation.transactionId, paymentState = "PROCESSANDO")
-        transactionFinished = false
-
-        CoroutineScope(Dispatchers.IO).launch {
-            Log.i("log", "start: ${operation.transactionId}")
-
-            paymentRepository.startPayment(
-                operation.transactionId,
-                key = keyRepository.retrieveKey()
-            ).collect {
-                Log.i("log", "start payment")
-            }
-
-            if (plugPag.isServiceBusy()) {
-                abort()
-            }
-
-
-            var transaction = Transaction(
-                id = operation.transactionId ?: "",
-                createDate = currentDate(),
-                lastUpdate = currentDate(),
-                status = Status.CREATED,
-                transactionStatus = TransactionStatus.NONE,
-                transactionType = TransactionType.PAYMENT
-            )
-            transactionDB.transactionDao().insertOrUpdateTransaction(transaction)
-
-            plugPag.setEventListener(object : PlugPagEventListener {
-                override fun onEvent(data: PlugPagEventData) {
-                    Log.i(
-                        "log", "eventCode: ${data.eventCode} customMessage: ${data.customMessage}"
-                    )
-                    if (transactionFinished) return
-
-                    state = when (data.eventCode) {
-                        in TRANSACTION_FINAL_STATES -> {
-                            transactionFinished = true
-                            state.copy(
-                                paymentState = data.customMessage
-                            )
-                        }
-
-                        else -> state.copy(paymentState = data.customMessage)
-                    }
-                }
-            })
-
-            plugPag.setPlugPagCustomPrinterLayout(getCustomPrinterDialog())
-
-            val plugPagResult = plugPag.doPayment(
-                PlugPagPaymentData(
-                    type = when (operation.paymentType) {
-                        2 -> TYPE_CREDITO
-                        4 -> TYPE_DEBITO
-                        else -> -1
-                    },
-                    amount = operation.value?.multiply(BigDecimal(100))?.toInt() ?: -1,
-                    installmentType = if (operation.installmentsNumber == 1) INSTALLMENT_TYPE_A_VISTA else INSTALLMENT_TYPE_PARC_VENDEDOR,
-                    installments = operation.installmentsNumber ?: 1,
-                    userReference = USER_REFERENCE,
-                    printReceipt = false,
-                    partialPay = false,
-                    isCarne = false
-                )
-            )
-
-            updateStateWithResult(plugPagResult)
-
-            transaction =
-                transaction.copy(
-                    transactionStatus = if (plugPagResult.result != 0) TransactionStatus.REJECTED else TransactionStatus.APPROVED,
-                    jsonTransaction = Gson().toJson(plugPagResult).replace("\\u", ""),
-                )
-
-            updateTransactionAsStatus(transaction, Status.PROCESSED)
-
-            sendAndPersistTransaction(transaction)
-        }
-    }
-
     private fun updateStateWithResult(result: PlugPagTransactionResult) {
         state = state.copy(
             paymentState = if (result.result != 0) result.message?.uppercase() else null,
@@ -251,6 +164,93 @@ class PaymentViewModel @Inject constructor(
         }
     }
 
+    fun doPayment(operation: RetrieveOperationsResponse.Operation.TransactionType) {
+
+        Log.i("log", "transaction: ${Gson().toJson(operation)}")
+
+        if (state.currentTransactionId != null) return
+        state =
+            state.copy(currentTransactionId = operation.transactionId, paymentState = "PROCESSANDO")
+        transactionFinished = false
+
+        CoroutineScope(Dispatchers.IO).launch {
+            Log.i("log", "start: ${operation.transactionId}")
+
+            paymentRepository.startPayment(
+                operation.transactionId,
+                key = keyRepository.retrieveKey()
+            ).collect {
+                Log.i("log", "start payment")
+            }
+
+            if (plugPag.isServiceBusy()) {
+                abort()
+            }
+
+            var transaction = Transaction(
+                id = operation.transactionId ?: "",
+                createDate = currentDate(),
+                lastUpdate = currentDate(),
+                status = Status.CREATED,
+                transactionStatus = TransactionStatus.NONE,
+                transactionType = TransactionType.PAYMENT
+            )
+            transactionDB.transactionDao().insertOrUpdateTransaction(transaction)
+
+            plugPag.setEventListener(object : PlugPagEventListener {
+                override fun onEvent(data: PlugPagEventData) {
+                    Log.i(
+                        "log", "eventCode: ${data.eventCode} customMessage: ${data.customMessage}"
+                    )
+                    if (transactionFinished) return
+
+                    state = when (data.eventCode) {
+                        in TRANSACTION_FINAL_STATES -> {
+                            transactionFinished = true
+                            state.copy(
+                                paymentState = data.customMessage
+                            )
+                        }
+
+                        else -> state.copy(paymentState = data.customMessage)
+                    }
+                }
+            })
+
+            plugPag.setPlugPagCustomPrinterLayout(getCustomPrinterDialog())
+
+            val plugPagResult = plugPag.doPayment(
+                PlugPagPaymentData(
+                    type = when (operation.paymentType) {
+                        2 -> TYPE_CREDITO
+                        4 -> TYPE_DEBITO
+                        else -> -1
+                    },
+                    amount = operation.value?.multiply(BigDecimal(100))?.toInt() ?: -1,
+                    installmentType = if (operation.installmentsNumber == 1) INSTALLMENT_TYPE_A_VISTA else INSTALLMENT_TYPE_PARC_VENDEDOR,
+                    installments = operation.installmentsNumber ?: 1,
+                    userReference = USER_REFERENCE,
+                    printReceipt = false,
+                    partialPay = false,
+                    isCarne = false
+                )
+            )
+
+            updateStateWithResult(plugPagResult)
+
+            transaction =
+                transaction.copy(
+                    transactionStatus = if (plugPagResult.result != 0) TransactionStatus.REJECTED else TransactionStatus.APPROVED,
+                    jsonTransaction = Gson().toJson(plugPagResult).replace("\\u", ""),
+                )
+
+            updateTransactionAsStatus(transaction, Status.PROCESSED)
+
+            sendAndPersistTransaction(transaction)
+        }
+    }
+
+
     fun doRefund(transactionId: String?) = CoroutineScope(Dispatchers.IO).launch {
 
         try {
@@ -260,6 +260,10 @@ class PaymentViewModel @Inject constructor(
                 Gson().fromJson(transaction.jsonTransaction, PlugPagTransactionResult::class.java)
 
             transaction = transaction.copy(transactionType = TransactionType.REFUND)
+
+            if (plugPag.isServiceBusy()) {
+                abort()
+            }
 
             state =
                 state.copy(paymentState = "PROCESSANDO")
