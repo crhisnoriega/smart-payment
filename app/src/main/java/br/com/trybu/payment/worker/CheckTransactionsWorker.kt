@@ -34,7 +34,7 @@ class CheckTransactionsWorker @Inject constructor(
             ).build().transactionDao()
 
             val pendingTransactions = transactionDAO.pendingTransaction(
-                status = Status.PENDING_SEND,
+                status = arrayOf(Status.PROCESSED, Status.ERROR_SEND),
                 transactionStatus = TransactionStatus.APPROVED
             )
 
@@ -45,7 +45,7 @@ class CheckTransactionsWorker @Inject constructor(
                     sendTransaction(transaction)
                     transactionDAO.insertTransaction(transaction.copy(status = Status.ACK_SEND))
                 } catch (e: Throwable) {
-                    transactionDAO.insertTransaction(transaction.copy(status = Status.PENDING_SEND))
+                    transactionDAO.insertTransaction(transaction.copy(status = Status.ERROR_SEND))
                 }
             }
 

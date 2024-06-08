@@ -2,7 +2,7 @@ package br.com.trybu.payment.util
 
 object PaymentConstants {
     //App Reference Constants
-    const val USER_REFERENCE = "SmartPayment"
+    const val USER_REFERENCE = "Elosgate"
 
     //Payments Constants
     const val TYPE_CREDITO = 1

@@ -22,6 +22,7 @@ import br.com.trybu.payment.db.entity.TransactionStatus
 import br.com.trybu.payment.db.entity.TransactionType
 import br.com.trybu.payment.db.entity.currentDate
 import br.com.trybu.payment.util.PaymentConstants.INSTALLMENT_TYPE_A_VISTA
+import br.com.trybu.payment.util.PaymentConstants.INSTALLMENT_TYPE_PARC_VENDEDOR
 import br.com.trybu.payment.util.PaymentConstants.TYPE_CREDITO
 import br.com.trybu.payment.util.PaymentConstants.TYPE_DEBITO
 import br.com.trybu.payment.util.PaymentConstants.USER_REFERENCE
@@ -32,7 +33,6 @@ import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPagEventListener
 import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPagPaymentData
 import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPagTransactionResult
 import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPagVoidData
-import br.com.uol.pagseguro.plugpagservice.wrapper.data.request.PlugPagBeepData
 import com.google.gson.Gson
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -61,6 +61,8 @@ class PaymentViewModel @Inject constructor(
 
     fun doPayment(operation: RetrieveOperationsResponse.Operation.TransactionType) {
 
+        Log.i("log", "transaction: ${Gson().toJson(operation)}")
+
         if (state.currentTransactionId != null) return
         state =
             state.copy(currentTransactionId = operation.transactionId, paymentState = "PROCESSANDO")
@@ -83,7 +85,6 @@ class PaymentViewModel @Inject constructor(
             )
             transactionDB.transactionDao().insertOrUpdateTransaction(transaction)
 
-            plugPag.beep(PlugPagBeepData(PlugPagBeepData.FREQUENCE_LEVEL_0, 1))
             plugPag.setEventListener(object : PlugPagEventListener {
                 override fun onEvent(data: PlugPagEventData) {
                     Log.i(
@@ -101,7 +102,6 @@ class PaymentViewModel @Inject constructor(
 
                         else -> state.copy(paymentState = data.customMessage)
                     }
-
                 }
             })
 
@@ -109,9 +109,13 @@ class PaymentViewModel @Inject constructor(
 
             val plugPagResult = plugPag.doPayment(
                 PlugPagPaymentData(
-                    type = if (operation.paymentType == 0) TYPE_CREDITO else TYPE_DEBITO,
+                    type = when (operation.paymentType) {
+                        2 -> TYPE_CREDITO
+                        4 -> TYPE_DEBITO
+                        else -> -1
+                    },
                     amount = operation.value?.multiply(BigDecimal(100))?.toInt() ?: -1,
-                    installmentType = INSTALLMENT_TYPE_A_VISTA,
+                    installmentType = if (operation.installmentsNumber == 1) INSTALLMENT_TYPE_A_VISTA else INSTALLMENT_TYPE_PARC_VENDEDOR,
                     installments = operation.installmentsNumber ?: 1,
                     userReference = USER_REFERENCE,
                     printReceipt = false,
@@ -124,12 +128,13 @@ class PaymentViewModel @Inject constructor(
 
             transaction =
                 transaction.copy(
-                    transactionStatus = if (plugPagResult.result != 0) TransactionStatus.REJECTED else TransactionStatus.APPROVED
+                    transactionStatus = if (plugPagResult.result != 0) TransactionStatus.REJECTED else TransactionStatus.APPROVED,
+                    jsonTransaction = Gson().toJson(plugPagResult).replace("\\u", ""),
                 )
 
-            updateTransactionAsStatus(transaction, plugPagResult, Status.PROCESSED)
+            updateTransactionAsStatus(transaction, Status.PROCESSED)
 
-            persistResult(transaction, plugPagResult)
+            sendAndPersistTransaction(transaction)
         }
     }
 
@@ -140,30 +145,34 @@ class PaymentViewModel @Inject constructor(
         )
     }
 
-    private suspend fun persistResult(
-        transaction: Transaction,
-        result: PlugPagTransactionResult
+    private suspend fun sendAndPersistTransaction(
+        transaction: Transaction
     ) {
         when (transaction.transactionStatus) {
-            TransactionStatus.APPROVED -> sendTransactionResult(result, transaction)
-            else -> transactionDB.transactionDao().insertOrUpdateTransaction(transaction)
+            TransactionStatus.APPROVED -> {
+                sendTransactionResult(transaction)
+            }
+
+            else -> {
+                transactionDB.transactionDao().insertOrUpdateTransaction(transaction)
+            }
         }
     }
 
     private suspend fun sendTransactionResult(
-        result: PlugPagTransactionResult, transaction: Transaction
+        transaction: Transaction
     ) {
         state = state.copy(paymentState = "ENVIANDO...")
         safeAPICall {
             paymentRepository.confirmPayment(
                 transactionId = transaction.id,
-                jsonTransaction = Gson().toJson(result),
+                jsonTransaction = transaction.jsonTransaction ?: "",
                 key = keyRepository.retrieveKey() ?: ""
             )
         }.collect {
             when (it) {
                 is Resources.Success<*> -> {
-                    updateTransactionAsStatus(transaction, result, Status.ACK_SEND)
+                    updateTransactionAsStatus(transaction, Status.ACK_SEND)
                     state = state.copy(paymentState = "ENVIADO COM SUCESSO")
                     Handler(Looper.getMainLooper()).postDelayed({
                         stopServiceAndGoBack()
@@ -171,7 +180,7 @@ class PaymentViewModel @Inject constructor(
                 }
 
                 is Resources.Error -> {
-                    updateTransactionAsStatus(transaction, result, Status.PENDING_SEND)
+                    updateTransactionAsStatus(transaction, Status.ERROR_SEND)
                     state = state.copy(paymentState = "ERRO NO ENVIO")
                     Handler(Looper.getMainLooper()).postDelayed({
                         stopServiceAndGoBack()
@@ -184,12 +193,12 @@ class PaymentViewModel @Inject constructor(
     }
 
     private fun updateTransactionAsStatus(
-        transaction: Transaction, result: PlugPagTransactionResult,
+        transaction: Transaction,
         status: Status
     ) {
 
         val transactionEntity = transaction.copy(
-            jsonTransaction = Gson().toJson(result),
+            jsonTransaction = transaction.jsonTransaction,
             lastUpdate = currentDate(),
             status = status
         )
@@ -272,12 +281,12 @@ class PaymentViewModel @Inject constructor(
             safeAPICall {
                 paymentRepository.confirmRefund(
                     transactionId = transaction.id,
-                    jsonTransaction = Gson().toJson(resultRefund),
+                    jsonTransaction = transaction.jsonTransaction ?: "",
                     key = keyRepository.retrieveKey() ?: ""
                 )
             }.collect {
                 when (it) {
-                    is Resources.Success<*> -> persistResult(transaction, result)
+                    is Resources.Success<*> -> sendAndPersistTransaction(transaction)
                     else -> {}
                 }
             }

@@ -24,9 +24,9 @@ abstract class TransactionDao {
     @Query("SELECT * FROM `transaction`")
     abstract fun getTransactions(): List<Transaction>
 
-    @Query("SELECT * FROM `transaction` WHERE  status = :status and transactionStatus = :transactionStatus")
+    @Query("SELECT * FROM `transaction` WHERE  status IN(:status) and transactionStatus = :transactionStatus")
     abstract fun pendingTransaction(
-        status: Status,
+        status: Array<Status>,
         transactionStatus: TransactionStatus
     ): List<Transaction>
 
