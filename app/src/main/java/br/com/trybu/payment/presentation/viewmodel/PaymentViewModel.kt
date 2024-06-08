@@ -155,7 +155,6 @@ class PaymentViewModel @Inject constructor(
             try {
                 plugPag.abort()
             } catch (_: IllegalArgumentException) {
-
             }
         }
 
@@ -164,17 +163,17 @@ class PaymentViewModel @Inject constructor(
         }
     }
 
-    fun doPayment(operation: RetrieveOperationsResponse.Operation.TransactionType) {
-
-        Log.i("log", "transaction: ${Gson().toJson(operation)}")
-
-        if (state.currentTransactionId != null) return
-        state =
-            state.copy(currentTransactionId = operation.transactionId, paymentState = "PROCESSANDO")
-        transactionFinished = false
-
+    fun doPayment(operation: RetrieveOperationsResponse.Operation.TransactionType) =
         CoroutineScope(Dispatchers.IO).launch {
-            Log.i("log", "start: ${operation.transactionId}")
+            Log.i("log", "transaction: ${Gson().toJson(operation)}")
+
+            if (state.currentTransactionId != null) return@launch
+            state =
+                state.copy(
+                    currentTransactionId = operation.transactionId,
+                    paymentState = "PROCESSANDO"
+                )
+            transactionFinished = false
 
             paymentRepository.startPayment(
                 operation.transactionId,
@@ -248,7 +247,6 @@ class PaymentViewModel @Inject constructor(
 
             sendAndPersistTransaction(transaction)
         }
-    }
 
 
     fun doRefund(transactionId: String?) = CoroutineScope(Dispatchers.IO).launch {
