@@ -42,6 +42,10 @@ class MainActivity : ComponentActivity() {
                 scanner.setPrompt("Scanning Code");
                 scanner.initiateScan()
             }
+
+            if (it == "exit") {
+                finish()
+            }
         }
 
     }

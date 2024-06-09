@@ -2,6 +2,7 @@ package br.com.trybu.payment.presentation.viewmodel
 
 import android.content.Context
 import android.net.Uri
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
@@ -83,22 +84,29 @@ class OperationInfoViewModel @Inject constructor(
     }
 
     fun retrieveKey() = viewModelScope.launch {
-        paymentRepository.retrieveKey(serialNumber = "PBA1238673598").catch {}
+        paymentRepository.retrieveKey(serialNumber = Build.SERIAL)
             .collect { establishment ->
-                establishment?.key?.let { keyRepository.persisKey(it) }
-                state = state.copy(
-                    wasInitialized = true,
-                    establishmentName = establishment?.establismentName,
-                    establishmentDocument = establishment?.document,
-                    serialNumber = "PBA1238673598",
-                    showInfo = true
-                )
+                if (establishment?.errors?.isEmpty() == true) {
+                    establishment.key.let { keyRepository.persisKey(it) }
+                    state = state.copy(
+                        wasInitialized = true,
+                        establishmentName = establishment.establismentName,
+                        establishmentDocument = establishment.document,
+                        serialNumber = Build.SERIAL,
+                        showInfo = true
+                    )
 
-                Handler(Looper.getMainLooper()).postDelayed({
-                    state = state.copy(showInfo = false)
-                }, 3000)
+                    Handler(Looper.getMainLooper()).postDelayed({
+                        state = state.copy(showInfo = false)
+                    }, 3000)
 
-                CheckTransactionsWorker.startWorker(context)
+                    CheckTransactionsWorker.startWorker(context)
+                } else {
+                    state = state.copy(
+                        wasInitialized = false,
+                        error = establishment?.errors?.first()?.errorDescription
+                    )
+                }
             }
     }
 
@@ -130,6 +138,10 @@ class OperationInfoViewModel @Inject constructor(
 
     fun hideInfo() {
         state = state.copy(showInfo = false)
+    }
+
+    fun exit() {
+        uiState.postValue("exit")
     }
 
     fun qrCode(contents: String) {
