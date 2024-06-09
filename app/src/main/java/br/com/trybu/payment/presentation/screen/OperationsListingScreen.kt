@@ -53,6 +53,7 @@ import br.com.trybu.ui.widget.button.PrimaryButton
 import br.com.trybu.ui.widget.card.AppCard
 import br.com.trybu.ui.widget.loading.LoadablePrimaryButton
 import com.google.gson.Gson
+import java.math.BigDecimal
 
 @Composable
 fun OperationsListingScreen(
@@ -117,7 +118,8 @@ fun OperationCard(
         ) {
             Row(
                 Modifier
-                    .padding(all = 20.dp),
+                    .padding(horizontal = 20.dp)
+                    .padding(top = 20.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
@@ -146,17 +148,18 @@ fun OperationCard(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 24.dp, end = 24.dp, bottom = 16.dp, top = 0.dp)
+                    .padding(start = 24.dp, end = 24.dp, bottom = 16.dp, top = 2.dp)
             ) {
                 operation.transactionsTypes.forEach { transactionType ->
                     LoadablePrimaryButton(
+                        containerColor = if(operation.isRefund == true) danger_700 else blue_500,
                         isLoading = false,
                         onClick = {
                             onSelect(transactionType)
                         }) {
                         Column(verticalArrangement = Arrangement.Center) {
                             Text(
-                                text = "${if (operation.isRefund == true) "Cancelar " else ""}${transactionType.toPaymentType()} R$ ${transactionType.value}",
+                                text = "${if (operation.isRefund == true) "Estornar - " else ""}${transactionType.toPaymentType()} R$ ${transactionType.value}",
                                 textAlign = TextAlign.Center
                             )
                         }
@@ -174,10 +177,14 @@ fun PreviewOperationCard() {
     AppTheme {
         OperationCard(
             operation = RetrieveOperationsResponse.Operation(
-                isRefund = false,
+                isRefund = true,
                 isRequestPayment = true,
                 htmlString = "<p style='text-align: center;'><b>Crédito<\\/b><br\\/><b>Valor: <\\/b> R\$ 30,98 <\\/p><p style='text-align: center;'><b>Crédito<\\/b><br\\/><b>Valor: <\\/b> R\$ 30,98 <\\/p>",
-                transactionsTypes = listOf()
+                transactionsTypes = listOf(
+                    RetrieveOperationsResponse.Operation.TransactionType(
+                        value = BigDecimal(100)
+                    )
+                )
             )
         ) {
 

@@ -10,7 +10,7 @@ android {
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "br.com.trybu.payment"
+        applicationId = "br.com.elosgate.payment"
         minSdk = 24
         targetSdk = 34
         versionCode = 1
@@ -102,7 +102,7 @@ dependencies {
     val work_version = "2.9.0"
     implementation("androidx.work:work-runtime-ktx:$work_version")
     implementation("androidx.hilt:hilt-work:1.0.0")
-    kapt( "androidx.hilt:hilt-compiler:1.0.0")
+    kapt("androidx.hilt:hilt-compiler:1.0.0")
 }
 
 kapt {

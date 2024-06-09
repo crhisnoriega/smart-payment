@@ -27,7 +27,6 @@ fun InitializationScreen(
     navigate: (String) -> Unit
 ) {
     Surface {
-
         LaunchedEffect(Unit) {
             viewModel.retrieveKey()
         }
@@ -38,9 +37,7 @@ fun InitializationScreen(
         }
 
         Box(
-            modifier = modifier
-                .fillMaxSize()
-                .testTag("indicador_carregamento")
+            modifier = modifier.fillMaxSize()
         ) {
             Image(
                 modifier = Modifier

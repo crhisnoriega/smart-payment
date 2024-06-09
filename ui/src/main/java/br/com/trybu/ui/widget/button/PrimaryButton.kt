@@ -7,15 +7,18 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import br.com.trybu.ui.theme.AppTheme
+import br.com.trybu.ui.theme.blue_500
 
 @Composable
 fun PrimaryButton(
@@ -23,6 +26,7 @@ fun PrimaryButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     contentPadding: PaddingValues = ButtonDefaults.ContentPadding,
+    containerColor: Color? = blue_500,
     content: @Composable RowScope.() -> Unit
 ) {
     Button(
@@ -32,6 +36,7 @@ fun PrimaryButton(
         enabled = enabled,
         contentPadding = contentPadding,
         content = content,
+        colors = ButtonDefaults.buttonColors().copy(containerColor = containerColor ?: blue_500)
     )
 }
 
@@ -42,7 +47,8 @@ fun PreviewPrimaryButton() {
         Surface(modifier = Modifier.fillMaxWidth()) {
             PrimaryButton(
                 modifier = Modifier.padding(16.dp),
-                onClick = { }
+                onClick = { },
+                containerColor = blue_500
             ) {
                 Text("Primary Button\nabc")
             }

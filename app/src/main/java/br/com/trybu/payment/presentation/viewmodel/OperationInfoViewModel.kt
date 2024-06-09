@@ -1,6 +1,7 @@
 package br.com.trybu.payment.presentation.viewmodel
 
 import android.content.Context
+import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
@@ -132,6 +133,6 @@ class OperationInfoViewModel @Inject constructor(
     }
 
     fun qrCode(contents: String) {
-        qrCode.value = contents
+        qrCode.value = Uri.encode(contents)
     }
 }

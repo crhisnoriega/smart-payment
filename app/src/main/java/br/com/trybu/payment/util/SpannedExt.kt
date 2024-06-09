@@ -24,6 +24,9 @@ fun RetrieveOperationsResponse.Operation.TransactionType.toPaymentType() = when 
     else -> "Debito - "
 }
 
+fun String?.sanitizeToSend() = this?.replace("\\u", "") ?: ""
+
+
 fun String?.toAnnotatedString(): AnnotatedString = buildAnnotatedString {
 
     val spannableString = SpannableStringBuilder(this@toAnnotatedString).toString()

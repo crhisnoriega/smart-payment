@@ -54,7 +54,6 @@ class MainActivity : ComponentActivity() {
                 IntentIntegrator.parseActivityResult(requestCode, resultCode, data)
             if (result.contents == null) {
             } else {
-
                 viewModel.qrCode(result.contents)
             }
         }

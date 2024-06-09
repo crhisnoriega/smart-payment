@@ -54,7 +54,7 @@ fun MainNavigation(
             DetailsScreen(
                 viewModel = hiltViewModel(),
                 transactionType = transactionType,
-                isRefund = isRefund.toBoolean() ?: false
+                isRefund = isRefund.toBoolean()
             ) {
                 controller.popBackStack()
             }

@@ -33,6 +33,10 @@ class CheckTransactionsWorker @Inject constructor(
                 TransactionDB::class.java, "database-name"
             ).build().transactionDao()
 
+            val sharedPreference =
+                appContext.getSharedPreferences("smart_payment", Context.MODE_PRIVATE)
+            val key = sharedPreference.getString("key", "") ?: throw Exception("dont key found")
+
             val pendingTransactions = transactionDAO.pendingTransaction(
                 status = arrayOf(Status.PROCESSED, Status.ERROR_SEND),
                 transactionStatus = TransactionStatus.APPROVED
@@ -42,10 +46,10 @@ class CheckTransactionsWorker @Inject constructor(
 
             pendingTransactions.forEach { transaction ->
                 try {
-                    sendTransaction(transaction)
-                    transactionDAO.insertTransaction(transaction.copy(status = Status.ACK_SEND))
+                    val result = sendTransaction(transaction, key)
+                    transactionDAO.insertOrUpdateTransaction(transaction.copy(status = Status.ACK_SEND))
                 } catch (e: Throwable) {
-                    transactionDAO.insertTransaction(transaction.copy(status = Status.ERROR_SEND))
+                    transactionDAO.insertOrUpdateTransaction(transaction.copy(status = Status.ERROR_SEND))
                 }
             }
 
@@ -59,15 +63,15 @@ class CheckTransactionsWorker @Inject constructor(
     }
 
 
-    private suspend fun sendTransaction(transaction: Transaction) {
+    private suspend fun sendTransaction(transaction: Transaction, key: String) =
         smartPaymentAPI.paymentConfirm(
             ConfirmRequest(
                 transactionId = transaction.id,
                 jsonRaw = transaction.jsonTransaction ?: "",
-                key = transaction.id
+                key = key
             )
         )
-    }
+
 
     companion object {
         fun startWorker(context: Context) = run {

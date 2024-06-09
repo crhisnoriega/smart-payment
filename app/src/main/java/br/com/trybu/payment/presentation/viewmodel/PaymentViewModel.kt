@@ -1,6 +1,5 @@
 package br.com.trybu.payment.presentation.viewmodel
 
-import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
@@ -26,6 +25,8 @@ import br.com.trybu.payment.util.PaymentConstants.INSTALLMENT_TYPE_PARC_VENDEDOR
 import br.com.trybu.payment.util.PaymentConstants.TYPE_CREDITO
 import br.com.trybu.payment.util.PaymentConstants.TYPE_DEBITO
 import br.com.trybu.payment.util.PaymentConstants.USER_REFERENCE
+import br.com.trybu.payment.util.TransactionException
+import br.com.trybu.payment.util.sanitizeToSend
 import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPag
 import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPagCustomPrinterLayout
 import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPagEventData
@@ -35,7 +36,6 @@ import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPagTransactionResult
 import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPagVoidData
 import com.google.gson.Gson
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -88,13 +88,13 @@ class PaymentViewModel @Inject constructor(
             if (isRefund == false) {
                 paymentRepository.confirmPayment(
                     transactionId = transaction.id,
-                    jsonTransaction = transaction.jsonTransaction ?: "",
+                    jsonTransaction = transaction.jsonTransaction.sanitizeToSend(),
                     key = keyRepository.retrieveKey() ?: ""
                 )
             } else {
                 paymentRepository.confirmRefund(
                     transactionId = transaction.id,
-                    jsonTransaction = transaction.jsonTransaction ?: "",
+                    jsonTransaction = transaction.jsonTransaction.sanitizeToSend(),
                     key = keyRepository.retrieveKey() ?: ""
                 )
             }
@@ -105,7 +105,7 @@ class PaymentViewModel @Inject constructor(
                     state = state.copy(paymentState = "ENVIADO COM SUCESSO")
                     Handler(Looper.getMainLooper()).postDelayed({
                         stopServiceAndGoBack()
-                    }, 5000)
+                    }, 1000)
                 }
 
                 is Resources.Error -> {
@@ -165,7 +165,6 @@ class PaymentViewModel @Inject constructor(
 
     fun doPayment(operation: RetrieveOperationsResponse.Operation.TransactionType) =
         CoroutineScope(Dispatchers.IO).launch {
-            Log.i("log", "transaction: ${Gson().toJson(operation)}")
 
             if (state.currentTransactionId != null) return@launch
             state =
@@ -240,7 +239,7 @@ class PaymentViewModel @Inject constructor(
             transaction =
                 transaction.copy(
                     transactionStatus = if (plugPagResult.result != 0) TransactionStatus.REJECTED else TransactionStatus.APPROVED,
-                    jsonTransaction = Gson().toJson(plugPagResult).replace("\\u", ""),
+                    jsonTransaction = Gson().toJson(plugPagResult),
                 )
 
             updateTransactionAsStatus(transaction, Status.PROCESSED)
@@ -252,8 +251,14 @@ class PaymentViewModel @Inject constructor(
     fun doRefund(transactionId: String?) = CoroutineScope(Dispatchers.IO).launch {
 
         try {
+            state =
+                state.copy(
+                    currentTransactionId = transactionId,
+                    paymentState = "PROCESSANDO"
+                )
+
             var transaction = transactionDB.transactionDao().findTransaction(transactionId ?: "")
-                ?: throw Exception("don't found local transaction")
+                ?: throw TransactionException("Dados para estorno não encontrados no terminal")
             val result =
                 Gson().fromJson(transaction.jsonTransaction, PlugPagTransactionResult::class.java)
 
@@ -299,15 +304,16 @@ class PaymentViewModel @Inject constructor(
             transaction =
                 transaction.copy(
                     transactionStatus = if (plugPagResultRefund.result != 0) TransactionStatus.REJECTED else TransactionStatus.APPROVED,
-                    jsonTransaction = Gson().toJson(plugPagResultRefund).replace("\\u", ""),
+                    jsonTransaction = Gson().toJson(plugPagResultRefund),
                     transactionType = TransactionType.REFUND
                 )
 
             updateTransactionAsStatus(transaction, Status.PROCESSED)
 
             sendTransactionResult(transaction, isRefund = true)
+        } catch (e: TransactionException) {
+            state = state.copy(paymentState = e.message)
         } catch (e: Exception) {
-            Log.i("log", e.message, e)
             state = state.copy(paymentState = "Erro inesperado, por favor tente mais tarde")
         }
     }
