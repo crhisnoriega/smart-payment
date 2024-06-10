@@ -40,6 +40,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.math.BigDecimal
+import java.util.UUID
 import javax.inject.Inject
 
 
@@ -175,10 +176,11 @@ class PaymentViewModel @Inject constructor(
             transactionFinished = false
 
             paymentRepository.startPayment(
-                operation.transactionId,
-                key = keyRepository.retrieveKey()
+                transactionId = operation.transactionId,
+                key = keyRepository.retrieveKey(),
+                sessionID = UUID.randomUUID().toString()
             ).collect {
-                Log.i("log", "start payment")
+
             }
 
             if (plugPag.isServiceBusy()) {
