@@ -9,3 +9,7 @@ data class RetrieveKeyResponse(
     @SerializedName("NomeEstabelecimento") val establismentName: String
 
 )
+
+data class RetrieveSessionID(
+    @SerializedName("Errors") val errors:List<RetrieveOperationsResponse.Error>?,
+)

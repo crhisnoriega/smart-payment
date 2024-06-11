@@ -5,7 +5,6 @@ import android.net.Uri
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
-import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -17,23 +16,12 @@ import br.com.trybu.payment.api.safeAPICall
 import br.com.trybu.payment.data.KeyRepository
 import br.com.trybu.payment.data.PaymentRepository
 import br.com.trybu.payment.data.model.RetrieveOperationsResponse
-import br.com.trybu.payment.util.PaymentConstants.INSTALLMENT_TYPE_A_VISTA
-import br.com.trybu.payment.util.PaymentConstants.TYPE_CREDITO
-import br.com.trybu.payment.util.PaymentConstants.USER_REFERENCE
 import br.com.trybu.payment.worker.CheckTransactionsWorker
-import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPag
 import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPagCustomPrinterLayout
-import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPagEventData
-import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPagEventListener
-import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPagPaymentData
-import br.com.uol.pagseguro.plugpagservice.wrapper.data.request.PlugPagBeepData
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
-import java.math.BigDecimal
+import java.util.UUID
 import javax.inject.Inject
 
 
@@ -147,4 +135,26 @@ class OperationInfoViewModel @Inject constructor(
     fun qrCode(contents: String) {
         qrCode.value = Uri.encode(contents)
     }
+
+    fun tryGoToPayment(
+        operation: RetrieveOperationsResponse.Operation.TransactionType,
+        isRefund: String?
+    ) =
+        viewModelScope.launch {
+            paymentRepository.startPayment(
+                transactionId = operation.transactionId,
+                key = keyRepository.retrieveKey(),
+                sessionID = UUID.randomUUID().toString()
+            ).collect {
+                if (it.body()?.errors?.isEmpty() == false) {
+
+                } else {
+                    state = state.copy(transactionType = operation, isRefund = isRefund)
+                }
+
+                return@collect
+            }
+
+
+        }
 }

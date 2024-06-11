@@ -13,4 +13,6 @@ data class UIState(
     val establishmentDocument: String? = null,
     val serialNumber: String? = null,
     val showInfo: Boolean = false,
+    var transactionType: RetrieveOperationsResponse.Operation.TransactionType? = null,
+    var isRefund: String? = null
 )

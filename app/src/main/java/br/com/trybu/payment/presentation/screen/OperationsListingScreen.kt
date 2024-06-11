@@ -1,13 +1,8 @@
 package br.com.trybu.payment.presentation.screen
 
 import android.net.Uri
-import android.text.SpannableStringBuilder
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,37 +14,28 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ShoppingCart
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.core.text.HtmlCompat
 import br.com.trybu.payment.R
 import br.com.trybu.payment.data.model.RetrieveOperationsResponse
 import br.com.trybu.payment.navigation.Routes
 import br.com.trybu.payment.presentation.viewmodel.OperationInfoViewModel
-import br.com.trybu.payment.presentation.viewmodel.PaymentViewModel
 import br.com.trybu.payment.util.toAnnotatedString
 import br.com.trybu.payment.util.toPaymentType
 import br.com.trybu.ui.theme.AppTheme
-import br.com.trybu.ui.theme.Body2
 import br.com.trybu.ui.theme.Subtitle2
-import br.com.trybu.ui.theme.Title2
 import br.com.trybu.ui.theme.blue_500
 import br.com.trybu.ui.theme.danger_700
 import br.com.trybu.ui.widget.AppScaffold
 import br.com.trybu.ui.widget.AppTopBar
-import br.com.trybu.ui.widget.button.PrimaryButton
 import br.com.trybu.ui.widget.card.AppCard
 import br.com.trybu.ui.widget.loading.LoadablePrimaryButton
 import com.google.gson.Gson
@@ -66,6 +52,23 @@ fun OperationsListingScreen(
     }
 
     val state = viewModel.state
+
+    LaunchedEffect(state) {
+        if (state.transactionType != null) {
+            val routeStr = Routes.payment.details
+                .replace(
+                    "{operation}",
+                    Uri.encode(Gson().toJson(state.transactionType))
+                )
+                .replace("{isRefund}", state.isRefund ?: "false")
+            route(routeStr)
+
+            state.transactionType = null
+            state.isRefund = null
+        }
+    }
+
+
 
     AppScaffold(
         modifier = Modifier.fillMaxSize(),
@@ -86,13 +89,7 @@ fun OperationsListingScreen(
             ) {
                 items(state.operations) { item ->
                     OperationCard(operation = item) { selection ->
-                        val routeStr = Routes.payment.details
-                            .replace(
-                                "{operation}",
-                                Uri.encode(Gson().toJson(selection))
-                            )
-                            .replace("{isRefund}", item.isRefund.toString())
-                        route(routeStr)
+                        viewModel.tryGoToPayment(selection, item.isRefund.toString())
                     }
                 }
             }
@@ -152,7 +149,7 @@ fun OperationCard(
             ) {
                 operation.transactionsTypes.forEach { transactionType ->
                     LoadablePrimaryButton(
-                        containerColor = if(operation.isRefund == true) danger_700 else blue_500,
+                        containerColor = if (operation.isRefund == true) danger_700 else blue_500,
                         isLoading = false,
                         onClick = {
                             onSelect(transactionType)

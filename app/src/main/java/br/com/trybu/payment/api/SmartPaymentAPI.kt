@@ -5,6 +5,7 @@ import br.com.trybu.payment.data.model.RetrieveKeyRequest
 import br.com.trybu.payment.data.model.RetrieveKeyResponse
 import br.com.trybu.payment.data.model.RetrieveOperationsRequest
 import br.com.trybu.payment.data.model.RetrieveOperationsResponse
+import br.com.trybu.payment.data.model.RetrieveSessionID
 import com.google.gson.JsonElement
 import retrofit2.Response
 import retrofit2.http.Body
@@ -31,7 +32,7 @@ interface SmartPaymentAPI {
 
     @POST("IniciarPagamentoPOS")
     @Headers("Content-Type: application/json")
-    suspend fun startPayment(@Body paymentConfirmRequest: ConfirmRequest): Response<JsonElement>
+    suspend fun startPayment(@Body paymentConfirmRequest: ConfirmRequest): Response<RetrieveSessionID>
     
 
     @POST("ConfirmarCancelamentoPOS")

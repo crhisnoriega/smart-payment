@@ -6,6 +6,7 @@ import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.core.os.postDelayed
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -175,13 +176,6 @@ class PaymentViewModel @Inject constructor(
                 )
             transactionFinished = false
 
-            paymentRepository.startPayment(
-                transactionId = operation.transactionId,
-                key = keyRepository.retrieveKey(),
-                sessionID = UUID.randomUUID().toString()
-            ).collect {
-
-            }
 
             if (plugPag.isServiceBusy()) {
                 abort()
