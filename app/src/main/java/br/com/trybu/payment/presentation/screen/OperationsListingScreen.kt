@@ -66,6 +66,10 @@ fun OperationsListingScreen(
             state.transactionType = null
             state.isRefund = null
         }
+
+        if (state.errors != null) {
+            route(Routes.payment.information)
+        }
     }
 
 

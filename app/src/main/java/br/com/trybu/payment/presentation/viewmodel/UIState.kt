@@ -14,5 +14,7 @@ data class UIState(
     val serialNumber: String? = null,
     val showInfo: Boolean = false,
     var transactionType: RetrieveOperationsResponse.Operation.TransactionType? = null,
-    var isRefund: String? = null
+    var isRefund: String? = null,
+    var errors: List<RetrieveOperationsResponse.Error>? = null
+
 )

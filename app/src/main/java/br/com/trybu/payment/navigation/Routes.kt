@@ -9,6 +9,7 @@ object Routes {
         const val information = "information"
         const val operations = "operations/{query}"
         const val details = "details/{isRefund}/{operation}"
+        const val pending = "pending"
     }
 
     val payment = Payment

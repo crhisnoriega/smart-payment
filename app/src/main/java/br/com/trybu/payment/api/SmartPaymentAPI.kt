@@ -38,4 +38,9 @@ interface SmartPaymentAPI {
     @POST("ConfirmarCancelamentoPOS")
     @Headers("Content-Type: application/json")
     suspend fun refundConfirm(@Body paymentConfirmRequest: ConfirmRequest): Response<JsonElement>
+
+    @POST("AbortarPagamentoPOS")
+    @Headers("Content-Type: application/json")
+    suspend fun abortPayment(@Body paymentConfirmRequest: ConfirmRequest): Response<RetrieveSessionID>
+
 }

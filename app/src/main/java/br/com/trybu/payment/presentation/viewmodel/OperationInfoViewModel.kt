@@ -147,7 +147,7 @@ class OperationInfoViewModel @Inject constructor(
                 sessionID = UUID.randomUUID().toString()
             ).collect {
                 if (it.body()?.errors?.isEmpty() == false) {
-
+                    state = state.copy(errors = it.body()?.errors)
                 } else {
                     state = state.copy(transactionType = operation, isRefund = isRefund)
                 }

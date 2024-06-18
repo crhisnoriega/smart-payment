@@ -10,6 +10,7 @@ import br.com.trybu.payment.presentation.screen.DetailsScreen
 import br.com.trybu.payment.presentation.screen.InformationScreen
 import br.com.trybu.payment.presentation.screen.InitializationScreen
 import br.com.trybu.payment.presentation.screen.OperationsListingScreen
+import br.com.trybu.payment.presentation.screen.PendingTransactionsScreen
 import br.com.trybu.payment.presentation.viewmodel.OperationInfoViewModel
 import br.com.trybu.payment.presentation.viewmodel.PaymentViewModel
 import com.google.gson.Gson
@@ -41,6 +42,10 @@ fun MainNavigation(
             OperationsListingScreen(viewModel = paymentViewModel, query = query) { route ->
                 if (route == "back") controller.popBackStack() else controller.navigate(route)
             }
+        }
+
+        composable(route = Routes.payment.pending) {
+            PendingTransactionsScreen()
         }
 
         composable(route = Routes.payment.details) { entry ->
