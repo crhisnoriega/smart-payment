@@ -14,7 +14,8 @@ data class Transaction(
     val lastUpdate: String,
     val status: Status,
     val transactionStatus: TransactionStatus,
-    val transactionType: TransactionType
+    val transactionType: TransactionType,
+    val sessionID: String
 )
 
 enum class Status {
@@ -36,7 +37,6 @@ enum class TransactionType {
     PAYMENT,
     REFUND
 }
-
 
 
 fun currentDate() = SimpleDateFormat("dd/MM/yyyy HH:mm:ss").format(Date())

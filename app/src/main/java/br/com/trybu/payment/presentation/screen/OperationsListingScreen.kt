@@ -61,6 +61,7 @@ fun OperationsListingScreen(
                     Uri.encode(Gson().toJson(state.transactionType))
                 )
                 .replace("{isRefund}", state.isRefund ?: "false")
+                .replace("{sessionID}", state.sessionID ?: "")
             route(routeStr)
 
             state.transactionType = null

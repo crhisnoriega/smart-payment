@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.trybu.payment.R
 import br.com.trybu.payment.navigation.Routes
+import br.com.trybu.payment.presentation.viewmodel.InitializationStatus
 import br.com.trybu.payment.presentation.viewmodel.OperationInfoViewModel
 import br.com.trybu.ui.theme.AppTheme
 import br.com.trybu.ui.theme.Body1
@@ -64,7 +65,7 @@ fun InformationScreen(
     AppScaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
-            AppTopBar(painter = painterResource(id = R.drawable.logo_elosgate))
+
         }
     ) { padding ->
         InformationContent(
@@ -75,34 +76,44 @@ fun InformationScreen(
             }
         )
 
-        if (state.showInfo) {
-            AppBottomSheet(
-                painter = painterResource(id = br.com.trybu.payment.ui.R.drawable.baseline_store_24),
-                title = "Dados do estabelecimento",
-                onDismiss = { viewModel.hideInfo() },
-                state = bottomSheet
-            ) {
-                Column(modifier = Modifier.padding(horizontal = 24.dp)) {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = "CNPJ",
-                        style = Title2.copy(fontSize = 18.sp),
-                        color = Color.Black
-                    )
-                    Text(text = state.establishmentDocument ?: "", style = Body1)
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = "Razão Social",
-                        style = Title2.copy(fontSize = 18.sp),
-                        color = Color.Black
-                    )
-                    Text(text = state.establishmentName ?: "", style = Body1)
-                    Spacer(modifier = Modifier.height(50.dp))
-                }
+        when (state.showInfo) {
+            is InitializationStatus.ShowInfo -> {
+                AppBottomSheet(
+                    painter = painterResource(id = br.com.trybu.payment.ui.R.drawable.baseline_store_24),
+                    title = "Dados do estabelecimento",
+                    onDismiss = { viewModel.hideInfo() },
+                    state = bottomSheet
+                ) {
+                    Column(modifier = Modifier.padding(horizontal = 24.dp)) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "CNPJ",
+                            style = Title2.copy(fontSize = 18.sp),
+                            color = Color.Black
+                        )
+                        Text(text = state.establishmentDocument ?: "", style = Body1)
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "Razão Social",
+                            style = Title2.copy(fontSize = 18.sp),
+                            color = Color.Black
+                        )
+                        Text(text = state.establishmentName ?: "", style = Body1)
+                        Spacer(modifier = Modifier.height(50.dp))
+                    }
 
+                }
             }
 
+            is InitializationStatus.ShowPending -> {
+                route(Routes.payment.pending)
+            }
+
+            else -> {}
         }
+
+        state.showInfo = InitializationStatus.ShowNothing
+
     }
 }
 
@@ -125,7 +136,11 @@ fun InformationContent(
                 .align(alignment = Alignment.Start)
         ) {
             Spacer(modifier = Modifier.height(16.dp))
-            Text(text = "Digite o CPF ou número de contrato para localizar a venda", style = Title2.copy(fontSize = 18.sp), color = Color.Black)
+            Text(
+                text = "Digite o CPF ou número de contrato para localizar a venda",
+                style = Title2.copy(fontSize = 18.sp),
+                color = Color.Black
+            )
             AppTextField(
                 value = query,
                 onValueChange = { query = it },

@@ -26,8 +26,8 @@ fun MainNavigation(
         startDestination = Routes.payment.initialize
     ) {
         composable(route = Routes.payment.initialize) {
-            InitializationScreen(viewModel = paymentViewModel) {
-                controller.navigate(Routes.payment.information)
+            InitializationScreen(viewModel = paymentViewModel) { route ->
+                controller.navigate(route)
             }
         }
 
@@ -45,12 +45,20 @@ fun MainNavigation(
         }
 
         composable(route = Routes.payment.pending) {
-            PendingTransactionsScreen()
+            PendingTransactionsScreen(
+                goToInput = {
+                    controller.navigate(Routes.payment.information)
+                },
+                onBackPress = {
+                    controller.navigate(Routes.payment.initialize)
+                })
         }
 
         composable(route = Routes.payment.details) { entry ->
             val jsonRaw = entry.arguments?.getString("operation")
             val isRefund = entry.arguments?.getString("isRefund")
+            val sessionID = entry.arguments?.getString("sessionID")
+
             val transactionType =
                 Gson().fromJson(
                     jsonRaw,
@@ -59,7 +67,8 @@ fun MainNavigation(
             DetailsScreen(
                 viewModel = hiltViewModel(),
                 transactionType = transactionType,
-                isRefund = isRefund.toBoolean()
+                isRefund = isRefund.toBoolean(),
+                sessionID = sessionID ?: ""
             ) {
                 controller.popBackStack()
             }

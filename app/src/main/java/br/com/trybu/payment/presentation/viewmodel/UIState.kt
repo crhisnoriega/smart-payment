@@ -8,13 +8,20 @@ data class UIState(
     val paymentState: String? = null,
     val isLoading: Boolean? = false,
     val currentTransactionId: String? = null,
-    val wasInitialized: Boolean = false,
+    val wasInitialized: Boolean? = null,
     val establishmentName: String? = null,
     val establishmentDocument: String? = null,
     val serialNumber: String? = null,
-    val showInfo: Boolean = false,
+    var showInfo: InitializationStatus? = InitializationStatus.ShowNothing,
     var transactionType: RetrieveOperationsResponse.Operation.TransactionType? = null,
     var isRefund: String? = null,
-    var errors: List<RetrieveOperationsResponse.Error>? = null
+    var errors: List<RetrieveOperationsResponse.Error>? = null,
+    var sessionID: String? = null
 
 )
+
+sealed class InitializationStatus() {
+    data object ShowInfo : InitializationStatus()
+    data object ShowPending : InitializationStatus()
+    data object ShowNothing : InitializationStatus()
+}

@@ -15,6 +15,7 @@ import br.com.trybu.payment.api.safeAPICall
 import br.com.trybu.payment.data.KeyRepository
 import br.com.trybu.payment.data.PaymentRepository
 import br.com.trybu.payment.data.model.RetrieveOperationsResponse
+import br.com.trybu.payment.data.model.RetrieveSessionID
 import br.com.trybu.payment.db.TransactionDB
 import br.com.trybu.payment.db.entity.Status
 import br.com.trybu.payment.db.entity.Transaction
@@ -57,7 +58,7 @@ class PaymentViewModel @Inject constructor(
 ) : ViewModel() {
 
     var uiState = MutableLiveData<String>()
-    var state by mutableStateOf(UIState(operations = listOf()))
+    var state by mutableStateOf(UIState(operations = listOf(), wasInitialized = true))
     private var transactionFinished = false
 
     private fun updateStateWithResult(result: PlugPagTransactionResult) {
@@ -80,6 +81,28 @@ class PaymentViewModel @Inject constructor(
             }
         }
     }
+
+    private suspend fun sendAbort(transactionId: String, sessionID: String) =
+        CoroutineScope(Dispatchers.IO).launch {
+            safeAPICall {
+                paymentRepository.abortPayment(
+                    transactionId = transactionId,
+                    key = keyRepository.retrieveKey(),
+                    sessionID = sessionID
+                )
+            }.collect {
+                when (it) {
+                    is Resources.Success<*> -> {
+                        transactionDB.transactionDao().findTransaction(transactionId)
+                            ?.let { transaction ->
+                                updateTransactionAsStatus(transaction, Status.ACK_SEND)
+                            }
+                    }
+
+                    else -> {}
+                }
+            }
+        }
 
     private suspend fun sendTransactionResult(
         transaction: Transaction,
@@ -165,82 +188,91 @@ class PaymentViewModel @Inject constructor(
         }
     }
 
-    fun doPayment(operation: RetrieveOperationsResponse.Operation.TransactionType) =
+    fun doPayment(
+        operation: RetrieveOperationsResponse.Operation.TransactionType,
+        sessionID: String
+    ) =
         CoroutineScope(Dispatchers.IO).launch {
 
-            if (state.currentTransactionId != null) return@launch
-            state =
-                state.copy(
-                    currentTransactionId = operation.transactionId,
-                    paymentState = "PROCESSANDO"
-                )
-            transactionFinished = false
-
-
-            if (plugPag.isServiceBusy()) {
-                abort()
-            }
-
-            var transaction = Transaction(
-                id = operation.transactionId ?: "",
-                createDate = currentDate(),
-                lastUpdate = currentDate(),
-                status = Status.CREATED,
-                transactionStatus = TransactionStatus.NONE,
-                transactionType = TransactionType.PAYMENT
-            )
-            transactionDB.transactionDao().insertOrUpdateTransaction(transaction)
-
-            plugPag.setEventListener(object : PlugPagEventListener {
-                override fun onEvent(data: PlugPagEventData) {
-                    Log.i(
-                        "log", "eventCode: ${data.eventCode} customMessage: ${data.customMessage}"
+            try {
+                if (state.currentTransactionId != null) return@launch
+                state =
+                    state.copy(
+                        currentTransactionId = operation.transactionId,
+                        paymentState = "PROCESSANDO"
                     )
-                    if (transactionFinished) return
+                transactionFinished = false
 
-                    state = when (data.eventCode) {
-                        in TRANSACTION_FINAL_STATES -> {
-                            transactionFinished = true
-                            state.copy(
-                                paymentState = data.customMessage
-                            )
-                        }
 
-                        else -> state.copy(paymentState = data.customMessage)
-                    }
+                if (plugPag.isServiceBusy()) {
+                    abort()
                 }
-            })
 
-            plugPag.setPlugPagCustomPrinterLayout(getCustomPrinterDialog())
-
-            val plugPagResult = plugPag.doPayment(
-                PlugPagPaymentData(
-                    type = when (operation.paymentType) {
-                        2 -> TYPE_CREDITO
-                        4 -> TYPE_DEBITO
-                        else -> -1
-                    },
-                    amount = operation.value?.multiply(BigDecimal(100))?.toInt() ?: -1,
-                    installmentType = if (operation.installmentsNumber == 1) INSTALLMENT_TYPE_A_VISTA else INSTALLMENT_TYPE_PARC_VENDEDOR,
-                    installments = operation.installmentsNumber ?: 1,
-                    userReference = USER_REFERENCE,
-                    printReceipt = false,
-                    partialPay = false,
-                    isCarne = false
+                var transaction = Transaction(
+                    id = operation.transactionId ?: "",
+                    createDate = currentDate(),
+                    lastUpdate = currentDate(),
+                    status = Status.CREATED,
+                    transactionStatus = TransactionStatus.NONE,
+                    transactionType = TransactionType.PAYMENT,
+                    sessionID = sessionID
                 )
-            )
+                transactionDB.transactionDao().insertOrUpdateTransaction(transaction)
 
-            updateStateWithResult(plugPagResult)
+                plugPag.setEventListener(object : PlugPagEventListener {
+                    override fun onEvent(data: PlugPagEventData) {
+                        Log.i(
+                            "log",
+                            "eventCode: ${data.eventCode} customMessage: ${data.customMessage}"
+                        )
+                        if (transactionFinished) return
 
-            transaction =
-                transaction.copy(
-                    transactionStatus = if (plugPagResult.result != 0) TransactionStatus.REJECTED else TransactionStatus.APPROVED,
-                    jsonTransaction = Gson().toJson(plugPagResult),
+                        state = when (data.eventCode) {
+                            in TRANSACTION_FINAL_STATES -> {
+                                transactionFinished = true
+                                state.copy(
+                                    paymentState = data.customMessage
+                                )
+                            }
+
+                            else -> state.copy(paymentState = data.customMessage)
+                        }
+                    }
+                })
+
+                plugPag.setPlugPagCustomPrinterLayout(getCustomPrinterDialog())
+
+                val plugPagResult = plugPag.doPayment(
+                    PlugPagPaymentData(
+                        type = when (operation.paymentType) {
+                            2 -> TYPE_CREDITO
+                            4 -> TYPE_DEBITO
+                            else -> -1
+                        },
+                        amount = operation.value?.multiply(BigDecimal(100))?.toInt() ?: -1,
+                        installmentType = if (operation.installmentsNumber == 1) INSTALLMENT_TYPE_A_VISTA else INSTALLMENT_TYPE_PARC_VENDEDOR,
+                        installments = operation.installmentsNumber ?: 1,
+                        userReference = USER_REFERENCE,
+                        printReceipt = false,
+                        partialPay = false,
+                        isCarne = false
+                    )
                 )
 
-            updateTransactionAsStatus(transaction, Status.PROCESSED)
+                updateStateWithResult(plugPagResult)
 
-            sendAndPersistTransaction(transaction)
+                transaction =
+                    transaction.copy(
+                        transactionStatus = if (plugPagResult.result != 0) TransactionStatus.REJECTED else TransactionStatus.APPROVED,
+                        jsonTransaction = Gson().toJson(plugPagResult),
+                    )
+
+                updateTransactionAsStatus(transaction, Status.PROCESSED)
+
+                sendAndPersistTransaction(transaction)
+            } catch (e: Exception) {
+                sendAbort(operation.transactionId ?: "", sessionID)
+            }
         }
 
 

@@ -26,6 +26,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.trybu.payment.R
+import br.com.trybu.payment.navigation.Routes
+import br.com.trybu.payment.presentation.viewmodel.InitializationStatus
 import br.com.trybu.payment.presentation.viewmodel.OperationInfoViewModel
 import br.com.trybu.payment.presentation.viewmodel.PaymentViewModel
 import br.com.trybu.ui.theme.Body1
@@ -47,30 +49,40 @@ fun InitializationScreen(
             viewModel.retrieveKey()
         }
 
-        if (viewModel.state.wasInitialized) {
-            viewModel.initialized()
-            navigate.invoke("")
-        } else {
-            AppBottomSheet(
-                painter = painterResource(id = br.com.trybu.payment.ui.R.drawable.baseline_store_24),
-                title = "",
-                onDismiss = {
-                    Handler(Looper.getMainLooper()).postDelayed({
-                        viewModel.exit()
-                    }, 0)
-                },
-                state = bottomSheet
-            ) {
-                Column(modifier = Modifier.padding(horizontal = 24.dp)) {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = viewModel.state.error ?: "",
-                        style = Title2.copy(fontSize = 18.sp),
-                        color = Color.Black
-                    )
-                    Spacer(modifier = Modifier.height(50.dp))
-                }
+        when {
+            (viewModel.state.showInfo == InitializationStatus.ShowPending) -> {
+                viewModel.initialized()
+                viewModel.state.showInfo = InitializationStatus.ShowNothing
+                navigate(Routes.payment.pending)
+            }
 
+            (viewModel.state.wasInitialized == true) -> {
+                viewModel.initialized()
+                navigate(Routes.payment.information)
+            }
+
+            (viewModel.state.wasInitialized == false) -> {
+                AppBottomSheet(
+                    painter = painterResource(id = br.com.trybu.payment.ui.R.drawable.baseline_store_24),
+                    title = "",
+                    onDismiss = {
+                        Handler(Looper.getMainLooper()).postDelayed({
+                            viewModel.exit()
+                        }, 0)
+                    },
+                    state = bottomSheet
+                ) {
+                    Column(modifier = Modifier.padding(horizontal = 24.dp)) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = viewModel.state.error ?: "",
+                            style = Title2.copy(fontSize = 18.sp),
+                            color = Color.Black
+                        )
+                        Spacer(modifier = Modifier.height(50.dp))
+                    }
+
+                }
             }
         }
         Box(

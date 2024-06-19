@@ -5,6 +5,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -16,10 +17,17 @@ import br.com.trybu.payment.api.safeAPICall
 import br.com.trybu.payment.data.KeyRepository
 import br.com.trybu.payment.data.PaymentRepository
 import br.com.trybu.payment.data.model.RetrieveOperationsResponse
+import br.com.trybu.payment.db.TransactionDB
+import br.com.trybu.payment.db.TransactionDao
+import br.com.trybu.payment.db.entity.Status
+import br.com.trybu.payment.db.entity.Transaction
+import br.com.trybu.payment.db.entity.TransactionStatus
 import br.com.trybu.payment.worker.CheckTransactionsWorker
 import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPagCustomPrinterLayout
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.UUID
 import javax.inject.Inject
@@ -30,12 +38,12 @@ class OperationInfoViewModel @Inject constructor(
     @ApplicationContext val context: Context,
     private val paymentRepository: PaymentRepository,
     private val keyRepository: KeyRepository,
-
-    ) : ViewModel() {
+    private val transactionDB: TransactionDB,
+) : ViewModel() {
 
     var uiState = MutableLiveData<String>()
     var qrCode = MutableLiveData<String>()
-    var state by mutableStateOf(UIState(operations = listOf()))
+    var state by mutableStateOf(UIState(operations = listOf(), wasInitialized = null))
 
 
     fun retrieveOperations(document: String) = viewModelScope.launch {
@@ -62,7 +70,7 @@ class OperationInfoViewModel @Inject constructor(
                         isLoading = false
                     )
 
-                is Resources.Loading -> {
+                else -> {
 
                 }
             }
@@ -71,24 +79,33 @@ class OperationInfoViewModel @Inject constructor(
         }
     }
 
-    fun retrieveKey() = viewModelScope.launch {
+    fun retrieveKey() = CoroutineScope(Dispatchers.IO).launch {
         paymentRepository.retrieveKey(serialNumber = Build.SERIAL)
             .collect { establishment ->
                 if (establishment?.errors?.isEmpty() == true) {
                     establishment.key.let { keyRepository.persisKey(it) }
-                    state = state.copy(
-                        wasInitialized = true,
-                        establishmentName = establishment.establismentName,
-                        establishmentDocument = establishment.document,
-                        serialNumber = Build.SERIAL,
-                        showInfo = true
+
+                    val pendingTransactions = transactionDB.transactionDao().pendingTransaction(
+                        status = arrayOf(Status.PROCESSED, Status.ERROR_SEND)
                     )
 
-                    Handler(Looper.getMainLooper()).postDelayed({
-                        state = state.copy(showInfo = false)
-                    }, 3000)
-
-                    CheckTransactionsWorker.startWorker(context)
+                    if (pendingTransactions.isEmpty()) {
+                        state = state.copy(
+                            wasInitialized = true,
+                            establishmentName = establishment.establismentName,
+                            establishmentDocument = establishment.document,
+                            serialNumber = Build.SERIAL,
+                            showInfo = InitializationStatus.ShowInfo
+                        )
+                        Handler(Looper.getMainLooper()).postDelayed({
+                            state = state.copy(showInfo = InitializationStatus.ShowNothing)
+                        }, 3000)
+                    } else {
+                        state = state.copy(
+                            showInfo = InitializationStatus.ShowPending,
+                            wasInitialized = true
+                        )
+                    }
                 } else {
                     state = state.copy(
                         wasInitialized = false,
@@ -97,6 +114,8 @@ class OperationInfoViewModel @Inject constructor(
                 }
             }
     }
+
+
 
     private fun getCustomPrinterDialog(): PlugPagCustomPrinterLayout {
         val customDialog = PlugPagCustomPrinterLayout()
@@ -107,6 +126,9 @@ class OperationInfoViewModel @Inject constructor(
         return customDialog
     }
 
+    fun initialized() {
+        state = state.copy(wasInitialized = false)
+    }
 
     fun dismissError() {
         state = state.copy(error = null, paymentState = null)
@@ -116,16 +138,12 @@ class OperationInfoViewModel @Inject constructor(
         return state
     }
 
-    fun initialized() {
-        state = state.copy(wasInitialized = false)
-    }
-
     fun openCamera() {
         uiState.value = "qrcode"
     }
 
     fun hideInfo() {
-        state = state.copy(showInfo = false)
+        state = state.copy(showInfo = InitializationStatus.ShowNothing)
     }
 
     fun exit() {
@@ -136,20 +154,26 @@ class OperationInfoViewModel @Inject constructor(
         qrCode.value = Uri.encode(contents)
     }
 
+
     fun tryGoToPayment(
         operation: RetrieveOperationsResponse.Operation.TransactionType,
         isRefund: String?
     ) =
         viewModelScope.launch {
+            val sessionID = UUID.randomUUID().toString()
             paymentRepository.startPayment(
                 transactionId = operation.transactionId,
                 key = keyRepository.retrieveKey(),
-                sessionID = UUID.randomUUID().toString()
+                sessionID = sessionID
             ).collect {
-                if (it.body()?.errors?.isEmpty() == false) {
-                    state = state.copy(errors = it.body()?.errors)
+                state = if (it.body()?.errors?.isEmpty() == false) {
+                    state.copy(errors = it.body()?.errors)
                 } else {
-                    state = state.copy(transactionType = operation, isRefund = isRefund)
+                    state.copy(
+                        transactionType = operation,
+                        isRefund = isRefund,
+                        sessionID = sessionID
+                    )
                 }
 
                 return@collect

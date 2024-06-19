@@ -31,6 +31,7 @@ fun DetailsScreen(
     viewModel: PaymentViewModel,
     transactionType: RetrieveOperationsResponse.Operation.TransactionType,
     isRefund: Boolean,
+    sessionID: String,
     goBack: () -> Unit
 ) {
 
@@ -45,7 +46,7 @@ fun DetailsScreen(
         if (isRefund) {
             viewModel.doRefund(transactionType.transactionId)
         } else {
-            viewModel.doPayment(transactionType)
+            viewModel.doPayment(transactionType, sessionID)
         }
     }
 

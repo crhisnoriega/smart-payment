@@ -38,8 +38,7 @@ class CheckTransactionsWorker @Inject constructor(
             val key = sharedPreference.getString("key", "") ?: throw Exception("dont key found")
 
             val pendingTransactions = transactionDAO.pendingTransaction(
-                status = arrayOf(Status.PROCESSED, Status.ERROR_SEND),
-                transactionStatus = TransactionStatus.APPROVED
+                status = arrayOf(Status.PROCESSED, Status.ERROR_SEND)
             )
 
             Log.i("log", "was found: ${pendingTransactions.size} pending transactions")
