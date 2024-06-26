@@ -116,8 +116,14 @@ fun OperationPendingCard(
             )
             Column(modifier = Modifier.padding(horizontal = 20.dp)) {
                 Spacer(modifier = Modifier.width(16.dp))
+                Text(text = "Session ID:")
                 Text(
-                    text = operation.id, style = Subtitle2
+                    text = operation.sessionID.split("-")[0], style = Subtitle2
+                )
+
+                Text(text = "Transaction ID:")
+                Text(
+                    text = operation.id.split("-")[0], style = Subtitle2
                 )
                 Text(
                     text = operation.createDate, style = Subtitle2

@@ -1,14 +1,12 @@
 package br.com.trybu.payment.presentation.viewmodel
 
-import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import br.com.trybu.payment.data.KeyRepository
 import br.com.trybu.payment.data.PaymentRepository
-import br.com.trybu.payment.db.TransactionDB
+import br.com.trybu.payment.db.TransactionDao
 import br.com.trybu.payment.db.entity.Status
 import br.com.trybu.payment.db.entity.Transaction
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -21,7 +19,7 @@ import javax.inject.Inject
 @HiltViewModel
 class PendingViewModel @Inject
 constructor(
-    private val transactionDB: TransactionDB,
+    private val transactionDAO: TransactionDao,
     private val paymentRepository: PaymentRepository,
     private val keyRepository: KeyRepository,
 ) : ViewModel() {
@@ -37,12 +35,11 @@ constructor(
         tryToSend(transactions)
     }
 
-    private fun pendingTransactions() = transactionDB.transactionDao().pendingTransaction(
+    private fun pendingTransactions() = transactionDAO.pendingTransaction(
         status = arrayOf(Status.PROCESSED, Status.ERROR_SEND)
     )
 
     suspend fun tryToSend(pendingTransactions: List<Transaction>) {
-        val transactionDAO = transactionDB.transactionDao()
         pendingTransactions.forEach { transaction ->
             try {
                 paymentRepository.abortPayment(

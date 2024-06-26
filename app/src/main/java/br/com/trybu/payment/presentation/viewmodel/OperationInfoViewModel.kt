@@ -5,7 +5,6 @@ import android.net.Uri
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
-import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -17,12 +16,9 @@ import br.com.trybu.payment.api.safeAPICall
 import br.com.trybu.payment.data.KeyRepository
 import br.com.trybu.payment.data.PaymentRepository
 import br.com.trybu.payment.data.model.RetrieveOperationsResponse
-import br.com.trybu.payment.db.TransactionDB
 import br.com.trybu.payment.db.TransactionDao
 import br.com.trybu.payment.db.entity.Status
-import br.com.trybu.payment.db.entity.Transaction
-import br.com.trybu.payment.db.entity.TransactionStatus
-import br.com.trybu.payment.worker.CheckTransactionsWorker
+import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPag
 import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPagCustomPrinterLayout
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -38,13 +34,13 @@ class OperationInfoViewModel @Inject constructor(
     @ApplicationContext val context: Context,
     private val paymentRepository: PaymentRepository,
     private val keyRepository: KeyRepository,
-    private val transactionDB: TransactionDB,
+    private val transactionDao: TransactionDao,
+    private val plugPag: PlugPag,
 ) : ViewModel() {
 
     var uiState = MutableLiveData<String>()
     var qrCode = MutableLiveData<String>()
     var state by mutableStateOf(UIState(operations = listOf(), wasInitialized = null))
-
 
     fun retrieveOperations(document: String) = viewModelScope.launch {
         state = state.copy(operations = listOf(), isLoading = true, error = null)
@@ -85,7 +81,7 @@ class OperationInfoViewModel @Inject constructor(
                 if (establishment?.errors?.isEmpty() == true) {
                     establishment.key.let { keyRepository.persisKey(it) }
 
-                    val pendingTransactions = transactionDB.transactionDao().pendingTransaction(
+                    val pendingTransactions = transactionDao.pendingTransaction(
                         status = arrayOf(Status.PROCESSED, Status.ERROR_SEND)
                     )
 
@@ -114,7 +110,6 @@ class OperationInfoViewModel @Inject constructor(
                 }
             }
     }
-
 
 
     private fun getCustomPrinterDialog(): PlugPagCustomPrinterLayout {
@@ -154,6 +149,10 @@ class OperationInfoViewModel @Inject constructor(
         qrCode.value = Uri.encode(contents)
     }
 
+    fun printLast() = CoroutineScope(Dispatchers.IO).launch {
+        plugPag.reprintCustomerReceipt()
+    }
+
 
     fun tryGoToPayment(
         operation: RetrieveOperationsResponse.Operation.TransactionType,
@@ -178,7 +177,5 @@ class OperationInfoViewModel @Inject constructor(
 
                 return@collect
             }
-
-
         }
 }

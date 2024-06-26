@@ -3,6 +3,7 @@ package br.com.trybu.payment.presentation.screen
 import android.net.Uri
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBox
+import androidx.compose.material.icons.filled.Print
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -26,6 +28,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -73,6 +76,9 @@ fun InformationScreen(
             goToOps = {
                 val goTo = Routes.payment.operations.replace("{query}", it)
                 route(goTo)
+            },
+            printLast = {
+                viewModel.printLast()
             }
         )
 
@@ -120,7 +126,8 @@ fun InformationScreen(
 @Composable
 fun InformationContent(
     goToOps: (String) -> Unit,
-    goToQRCode: () -> Unit
+    goToQRCode: () -> Unit,
+    printLast: () -> Unit
 ) {
     var query by remember { mutableStateOf("") }
     Column(
@@ -158,18 +165,45 @@ fun InformationContent(
             }
         }
 
-        PrimaryButton(
-            onClick = { goToQRCode() },
-            modifier = Modifier
-                .padding(32.dp)
-                .align(alignment = Alignment.End)
-        ) {
-            Icon(
-                imageVector = Icons.Filled.AccountBox,
-                contentDescription = "",
-                modifier = Modifier.padding(horizontal = 4.dp)
-            )
-            Text(text = "QRCode")
+        Column(modifier = Modifier.align(alignment = Alignment.End)) {
+
+            PrimaryButton(
+                onClick = { printLast() },
+                modifier = Modifier
+                    .padding(horizontal = 32.dp)
+
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Print,
+                        contentDescription = "",
+                        modifier = Modifier.padding(horizontal = 4.dp)
+                    )
+                    Text(
+                        text = "Imprimir último\ncomprovante",
+                        maxLines = 2,
+                        textAlign = TextAlign.Center
+                    )
+                }
+
+            }
+
+            PrimaryButton(
+                onClick = { goToQRCode() },
+                modifier = Modifier
+                    .padding(horizontal = 32.dp)
+
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.AccountBox,
+                    contentDescription = "",
+                    modifier = Modifier.padding(horizontal = 4.dp)
+                )
+                Text(text = "QRCode")
+            }
         }
 
     }

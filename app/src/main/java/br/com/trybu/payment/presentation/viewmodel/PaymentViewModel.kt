@@ -6,7 +6,6 @@ import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.core.os.postDelayed
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -15,8 +14,7 @@ import br.com.trybu.payment.api.safeAPICall
 import br.com.trybu.payment.data.KeyRepository
 import br.com.trybu.payment.data.PaymentRepository
 import br.com.trybu.payment.data.model.RetrieveOperationsResponse
-import br.com.trybu.payment.data.model.RetrieveSessionID
-import br.com.trybu.payment.db.TransactionDB
+import br.com.trybu.payment.db.TransactionDao
 import br.com.trybu.payment.db.entity.Status
 import br.com.trybu.payment.db.entity.Transaction
 import br.com.trybu.payment.db.entity.TransactionStatus
@@ -42,17 +40,14 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.math.BigDecimal
-import java.util.UUID
 import javax.inject.Inject
 
-
 private val TRANSACTION_FINAL_STATES = listOf(18, 19)
-
 
 @HiltViewModel
 class PaymentViewModel @Inject constructor(
     private val plugPag: PlugPag,
-    private val transactionDB: TransactionDB,
+    private val transactionDao: TransactionDao,
     private val paymentRepository: PaymentRepository,
     private val keyRepository: KeyRepository
 ) : ViewModel() {
@@ -72,12 +67,12 @@ class PaymentViewModel @Inject constructor(
         transaction: Transaction
     ) {
         when (transaction.transactionStatus) {
-            TransactionStatus.APPROVED -> {
+            TransactionStatus.APPROVED, TransactionStatus.REJECTED -> {
                 sendTransactionResult(transaction)
             }
 
             else -> {
-                transactionDB.transactionDao().insertOrUpdateTransaction(transaction)
+                updateTransactionAsStatus(transaction, Status.ERROR_SEND)
             }
         }
     }
@@ -93,7 +88,7 @@ class PaymentViewModel @Inject constructor(
             }.collect {
                 when (it) {
                     is Resources.Success<*> -> {
-                        transactionDB.transactionDao().findTransaction(transactionId)
+                        transactionDao.findTransaction(transactionId)
                             ?.let { transaction ->
                                 updateTransactionAsStatus(transaction, Status.ACK_SEND)
                             }
@@ -156,7 +151,7 @@ class PaymentViewModel @Inject constructor(
             lastUpdate = currentDate(),
             status = status
         )
-        transactionDB.transactionDao().insertOrUpdateTransaction(transactionEntity)
+        transactionDao.insertOrUpdateTransaction(transactionEntity)
     }
 
     private fun stopServiceAndGoBack() {
@@ -193,7 +188,6 @@ class PaymentViewModel @Inject constructor(
         sessionID: String
     ) =
         CoroutineScope(Dispatchers.IO).launch {
-
             try {
                 if (state.currentTransactionId != null) return@launch
                 state =
@@ -202,7 +196,6 @@ class PaymentViewModel @Inject constructor(
                         paymentState = "PROCESSANDO"
                     )
                 transactionFinished = false
-
 
                 if (plugPag.isServiceBusy()) {
                     abort()
@@ -217,7 +210,7 @@ class PaymentViewModel @Inject constructor(
                     transactionType = TransactionType.PAYMENT,
                     sessionID = sessionID
                 )
-                transactionDB.transactionDao().insertOrUpdateTransaction(transaction)
+                transactionDao.insertOrUpdateTransaction(transaction)
 
                 plugPag.setEventListener(object : PlugPagEventListener {
                     override fun onEvent(data: PlugPagEventData) {
@@ -285,7 +278,7 @@ class PaymentViewModel @Inject constructor(
                     paymentState = "PROCESSANDO"
                 )
 
-            var transaction = transactionDB.transactionDao().findTransaction(transactionId ?: "")
+            var transaction = transactionDao.findTransaction(transactionId ?: "")
                 ?: throw TransactionException("Dados para estorno não encontrados no terminal")
             val result =
                 Gson().fromJson(transaction.jsonTransaction, PlugPagTransactionResult::class.java)
@@ -316,7 +309,6 @@ class PaymentViewModel @Inject constructor(
 
                         else -> state.copy(paymentState = data.customMessage)
                     }
-
                 }
             })
 
