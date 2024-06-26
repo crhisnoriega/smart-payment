@@ -21,7 +21,7 @@ data class Transaction(
 enum class Status {
     CREATED,
     PROCESSED,
-    ERROR_SEND,
+    ERROR_ACK,
     ACK_SEND
 }
 

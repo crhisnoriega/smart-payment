@@ -6,15 +6,12 @@ import androidx.room.Room
 import androidx.work.CoroutineWorker
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
-import androidx.work.Worker
 import androidx.work.WorkerParameters
 import br.com.trybu.payment.api.SmartPaymentAPI
-import br.com.trybu.payment.data.PaymentRepository
 import br.com.trybu.payment.data.model.ConfirmRequest
 import br.com.trybu.payment.db.TransactionDB
 import br.com.trybu.payment.db.entity.Status
 import br.com.trybu.payment.db.entity.Transaction
-import br.com.trybu.payment.db.entity.TransactionStatus
 import br.com.trybu.payment.di.RemoteModule
 import javax.inject.Inject
 
@@ -37,9 +34,7 @@ class CheckTransactionsWorker @Inject constructor(
                 appContext.getSharedPreferences("smart_payment", Context.MODE_PRIVATE)
             val key = sharedPreference.getString("key", "") ?: throw Exception("dont key found")
 
-            val pendingTransactions = transactionDAO.pendingTransaction(
-                status = arrayOf(Status.PROCESSED, Status.ERROR_SEND)
-            )
+            val pendingTransactions = transactionDAO.pendingTransaction()
 
             Log.i("log", "was found: ${pendingTransactions.size} pending transactions")
 
@@ -48,7 +43,7 @@ class CheckTransactionsWorker @Inject constructor(
                     val result = sendTransaction(transaction, key)
                     transactionDAO.insertOrUpdateTransaction(transaction.copy(status = Status.ACK_SEND))
                 } catch (e: Throwable) {
-                    transactionDAO.insertOrUpdateTransaction(transaction.copy(status = Status.ERROR_SEND))
+                    transactionDAO.insertOrUpdateTransaction(transaction.copy(status = Status.ERROR_ACK))
                 }
             }
 

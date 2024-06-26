@@ -56,7 +56,7 @@ class PaymentViewModel @Inject constructor(
     var state by mutableStateOf(UIState(operations = listOf(), wasInitialized = true))
     private var transactionFinished = false
 
-    private fun updateStateWithResult(result: PlugPagTransactionResult) {
+    private fun updateUIStateWithResult(result: PlugPagTransactionResult) {
         state = state.copy(
             paymentState = if (result.result != 0) result.message?.uppercase() else null,
             currentTransactionId = null
@@ -72,7 +72,7 @@ class PaymentViewModel @Inject constructor(
             }
 
             else -> {
-                updateTransactionAsStatus(transaction, Status.ERROR_SEND)
+                updateTransactionAsStatus(transaction, Status.ERROR_ACK)
             }
         }
     }
@@ -129,7 +129,7 @@ class PaymentViewModel @Inject constructor(
                 }
 
                 is Resources.Error -> {
-                    updateTransactionAsStatus(transaction, Status.ERROR_SEND)
+                    updateTransactionAsStatus(transaction, Status.ERROR_ACK)
                     state = state.copy(paymentState = "ERRO NO ENVIO")
                     Handler(Looper.getMainLooper()).postDelayed({
                         stopServiceAndGoBack()
@@ -145,7 +145,6 @@ class PaymentViewModel @Inject constructor(
         transaction: Transaction,
         status: Status
     ) {
-
         val transactionEntity = transaction.copy(
             jsonTransaction = transaction.jsonTransaction,
             lastUpdate = currentDate(),
@@ -252,16 +251,20 @@ class PaymentViewModel @Inject constructor(
                     )
                 )
 
-                updateStateWithResult(plugPagResult)
+                // update ui
+                updateUIStateWithResult(plugPagResult)
 
+                // update transaction
                 transaction =
                     transaction.copy(
                         transactionStatus = if (plugPagResult.result != 0) TransactionStatus.REJECTED else TransactionStatus.APPROVED,
                         jsonTransaction = Gson().toJson(plugPagResult),
                     )
 
+                // persist transaction with status
                 updateTransactionAsStatus(transaction, Status.PROCESSED)
 
+                // send transaction
                 sendAndPersistTransaction(transaction)
             } catch (e: Exception) {
                 sendAbort(operation.transactionId ?: "", sessionID)
@@ -319,7 +322,7 @@ class PaymentViewModel @Inject constructor(
                 )
             )
 
-            updateStateWithResult(plugPagResultRefund)
+            updateUIStateWithResult(plugPagResultRefund)
 
             transaction =
                 transaction.copy(

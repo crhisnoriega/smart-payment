@@ -81,9 +81,7 @@ class OperationInfoViewModel @Inject constructor(
                 if (establishment?.errors?.isEmpty() == true) {
                     establishment.key.let { keyRepository.persisKey(it) }
 
-                    val pendingTransactions = transactionDao.pendingTransaction(
-                        status = arrayOf(Status.PROCESSED, Status.ERROR_SEND)
-                    )
+                    val pendingTransactions = transactionDao.pendingTransaction()
 
                     if (pendingTransactions.isEmpty()) {
                         state = state.copy(

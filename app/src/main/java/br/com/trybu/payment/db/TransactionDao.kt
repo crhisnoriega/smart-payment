@@ -26,7 +26,7 @@ abstract class TransactionDao {
 
     @Query("SELECT * FROM `transaction` WHERE  status IN(:status)")
     abstract fun pendingTransaction(
-        status: Array<Status>
+        status: Array<Status> = arrayOf(Status.PROCESSED, Status.ERROR_ACK, Status.CREATED)
     ): List<Transaction>
 
     fun insertOrUpdateTransaction(transaction: Transaction) {
