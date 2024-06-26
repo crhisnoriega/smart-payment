@@ -44,6 +44,7 @@ import br.com.trybu.ui.widget.AppBottomSheet
 import br.com.trybu.ui.widget.AppScaffold
 import br.com.trybu.ui.widget.AppTopBar
 import br.com.trybu.ui.widget.button.PrimaryButton
+import br.com.trybu.ui.widget.loading.LoadablePrimaryButton
 import br.com.trybu.ui.widget.text.AppTextField
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -56,6 +57,7 @@ fun InformationScreen(
     val bottomSheet = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val state = viewModel.state
     val qrCode by viewModel.qrCode.observeAsState()
+    var reprint by viewModel.reprint
 
 
     LaunchedEffect(qrCode) {
@@ -79,7 +81,8 @@ fun InformationScreen(
             },
             printLast = {
                 viewModel.printLast()
-            }
+            },
+            reprint = reprint
         )
 
         when (state.showInfo) {
@@ -127,7 +130,8 @@ fun InformationScreen(
 fun InformationContent(
     goToOps: (String) -> Unit,
     goToQRCode: () -> Unit,
-    printLast: () -> Unit
+    printLast: () -> Unit,
+    reprint: Boolean
 ) {
     var query by remember { mutableStateOf("") }
     Column(
@@ -167,7 +171,8 @@ fun InformationContent(
 
         Column(modifier = Modifier.align(alignment = Alignment.End)) {
 
-            PrimaryButton(
+            LoadablePrimaryButton(
+                isLoading = reprint,
                 onClick = { printLast() },
                 modifier = Modifier
                     .padding(horizontal = 32.dp)

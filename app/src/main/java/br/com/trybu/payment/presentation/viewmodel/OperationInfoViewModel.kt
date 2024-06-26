@@ -41,6 +41,7 @@ class OperationInfoViewModel @Inject constructor(
     var uiState = MutableLiveData<String>()
     var qrCode = MutableLiveData<String>()
     var state by mutableStateOf(UIState(operations = listOf(), wasInitialized = null))
+    var reprint = mutableStateOf(false)
 
     fun retrieveOperations(document: String) = viewModelScope.launch {
         state = state.copy(operations = listOf(), isLoading = true, error = null)
@@ -148,7 +149,9 @@ class OperationInfoViewModel @Inject constructor(
     }
 
     fun printLast() = CoroutineScope(Dispatchers.IO).launch {
+        reprint.value = true
         plugPag.reprintCustomerReceipt()
+        reprint.value = false
     }
 
 
