@@ -17,6 +17,7 @@ import br.com.trybu.payment.util.sanitizeToSend
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -51,6 +52,9 @@ constructor(
                 else -> {}
             }
         }
+
+
+        delay(1000)
 
         statePending = if (pendingTransactions().isEmpty()) {
             "success"
