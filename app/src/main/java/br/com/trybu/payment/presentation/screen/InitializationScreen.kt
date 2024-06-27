@@ -2,6 +2,7 @@ package br.com.trybu.payment.presentation.screen
 
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -44,6 +45,7 @@ fun InitializationScreen(
             viewModel.retrieveKey()
         }
 
+        Log.i("log", "viewModel.state.showInfo: ${viewModel.state.showInfo}")
         when {
             (viewModel.state.showInfo == InitializationStatus.ShowPending) -> {
                 viewModel.initialized()

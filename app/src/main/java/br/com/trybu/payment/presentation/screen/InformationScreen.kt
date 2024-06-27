@@ -1,6 +1,7 @@
 package br.com.trybu.payment.presentation.screen
 
 import android.net.Uri
+import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -85,6 +86,7 @@ fun InformationScreen(
             reprint = reprint
         )
 
+        Log.i("log", "state.showInfo: ${state.showInfo}")
         when (state.showInfo) {
             is InitializationStatus.ShowInfo -> {
                 AppBottomSheet(
@@ -110,7 +112,6 @@ fun InformationScreen(
                         Text(text = state.establishmentName ?: "", style = Body1)
                         Spacer(modifier = Modifier.height(50.dp))
                     }
-
                 }
             }
 
@@ -121,7 +122,7 @@ fun InformationScreen(
             else -> {}
         }
 
-        state.showInfo = InitializationStatus.ShowNothing
+        //state.showInfo = InitializationStatus.ShowNothing
 
     }
 }
