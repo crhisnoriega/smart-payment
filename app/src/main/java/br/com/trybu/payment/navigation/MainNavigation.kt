@@ -68,10 +68,14 @@ fun MainNavigation(
                 viewModel = hiltViewModel(),
                 transactionType = transactionType,
                 isRefund = isRefund.toBoolean(),
-                sessionID = sessionID ?: ""
-            ) {
-                controller.popBackStack()
-            }
+                sessionID = sessionID ?: "",
+                goBack = {
+                    controller.navigate(Routes.payment.information)
+                },
+                goInformation = {
+                    controller.popBackStack()
+                }
+            )
         }
     }
 }

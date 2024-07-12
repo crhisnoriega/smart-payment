@@ -1,12 +1,14 @@
 package br.com.trybu.payment.api
 
 
+import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import retrofit2.HttpException
+import retrofit2.Response
 
 suspend inline fun <T> safeAPICall(
     crossinline block: suspend () -> Flow<T>,
@@ -15,20 +17,14 @@ suspend inline fun <T> safeAPICall(
     block.invoke()
         .flowOn(Dispatchers.IO)
         .catch { throwable ->
-            when (throwable) {
-                is HttpException -> {
-                    when (throwable.code()) {
-                        400, 401 -> emit(Resources.Error(throwable, throwable.message))
-                    }
-                }
-
-                else -> {
-                    emit(Resources.Error(throwable, throwable.message))
-                }
-            }
-
+            emit(Resources.Error(throwable, throwable.message))
         }.collect {
-            emit(Resources.Success(it))
+            Log.i("log", "response: $it")
+            (it as? Response<*>)?.let { response ->
+                if (response.code() >= 400) emit(Resources.Error(Exception(), ""))
+            } ?: kotlin.run {
+                emit(Resources.Success(it))
+            }
         }
 }
 

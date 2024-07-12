@@ -67,13 +67,9 @@ class PaymentViewModel @Inject constructor(
         transaction: Transaction
     ) {
         when (transaction.transactionStatus) {
-            TransactionStatus.APPROVED, TransactionStatus.REJECTED -> {
-                sendTransactionResult(transaction)
-            }
-
-            else -> {
-                updateTransactionAsStatus(transaction, Status.ERROR_ACK)
-            }
+            TransactionStatus.APPROVED -> sendTransactionResult(transaction)
+            TransactionStatus.REJECTED -> sendAbort(transaction.id, transaction.sessionID)
+            else -> updateTransactionAsStatus(transaction, Status.ERROR_ACK)
         }
     }
 
@@ -178,7 +174,7 @@ class PaymentViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-            uiState.value = "goback"
+            uiState.value = "goinformation"
         }
     }
 
@@ -234,6 +230,7 @@ class PaymentViewModel @Inject constructor(
 
                 plugPag.setPlugPagCustomPrinterLayout(getCustomPrinterDialog())
 
+                // chamada sdk PagSeguro
                 val plugPagResult = plugPag.doPayment(
                     PlugPagPaymentData(
                         type = when (operation.paymentType) {

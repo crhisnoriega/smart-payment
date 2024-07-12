@@ -32,6 +32,7 @@ fun DetailsScreen(
     transactionType: RetrieveOperationsResponse.Operation.TransactionType,
     isRefund: Boolean,
     sessionID: String,
+    goInformation: () -> Unit,
     goBack: () -> Unit
 ) {
 
@@ -39,7 +40,10 @@ fun DetailsScreen(
     val uiState by viewModel.uiState.observeAsState()
 
     LaunchedEffect(uiState) {
-        if (uiState == "goback") goBack()
+        when (uiState) {
+            "goback" -> goBack()
+            "goinformation" -> goInformation()
+        }
     }
 
     LaunchedEffect(Unit) {
@@ -54,7 +58,7 @@ fun DetailsScreen(
         modifier = Modifier.fillMaxSize(),
         topBar = {
             AppTopBar(painter = painterResource(id = R.drawable.logo_elosgate)) {
-                goBack()
+                goInformation()
             }
         }
     ) { padding ->
