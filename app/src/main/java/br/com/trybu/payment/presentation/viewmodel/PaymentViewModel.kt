@@ -52,7 +52,7 @@ class PaymentViewModel @Inject constructor(
     private val keyRepository: KeyRepository
 ) : ViewModel() {
 
-    var uiState = MutableLiveData<String>()
+    var uiState = MutableLiveData<EventFlow>()
     var state by mutableStateOf(UIState(operations = listOf(), wasInitialized = true))
     private var transactionFinished = false
 
@@ -150,7 +150,7 @@ class PaymentViewModel @Inject constructor(
     }
 
     private fun stopServiceAndGoBack() {
-        uiState.postValue("goback")
+        uiState.postValue(EventFlow.GoToBack)
         plugPag.disposeSubscriber()
         plugPag.unbindService()
     }
@@ -174,7 +174,7 @@ class PaymentViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-            uiState.value = "goinformation"
+            uiState.value = EventFlow.GoToInitialization
         }
     }
 
