@@ -1,6 +1,7 @@
 package br.com.trybu.payment.api
 
 
+import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -17,9 +18,11 @@ suspend inline fun <T> safeAPICall(
         .catch { throwable ->
             emit(Resources.Error(throwable, throwable.message))
         }.collect {
+            Log.i("log", "response: $it")
             (it as? Response<*>)?.let { response ->
                 if (response.code() >= 400) emit(Resources.Error(Exception(), ""))
-                else emit(Resources.Success(it))
+            } ?: kotlin.run {
+                emit(Resources.Success(it))
             }
         }
 }

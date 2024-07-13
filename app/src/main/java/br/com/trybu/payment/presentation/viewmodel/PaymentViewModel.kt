@@ -6,9 +6,7 @@ import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import br.com.trybu.payment.api.Resources
 import br.com.trybu.payment.api.safeAPICall
 import br.com.trybu.payment.data.KeyRepository
@@ -72,7 +70,9 @@ class PaymentViewModel @Inject constructor(
                 transactionFinished = false
 
                 if (plugPag.isServiceBusy()) {
-                    abort()
+                    abort(operation.transactionId, sessionID) {
+                        eventFlow = EventFlow.GoToBack
+                    }
                 }
 
                 var transaction = Transaction(
@@ -149,7 +149,6 @@ class PaymentViewModel @Inject constructor(
 
 
     fun doRefund(transactionId: String?) = CoroutineScope(Dispatchers.IO).launch {
-
         try {
             uiState =
                 uiState.copy(
@@ -165,7 +164,9 @@ class PaymentViewModel @Inject constructor(
             transaction = transaction.copy(transactionType = TransactionType.REFUND)
 
             if (plugPag.isServiceBusy()) {
-                abort()
+                abort {
+                    eventFlow = EventFlow.GoToBack
+                }
             }
 
             uiState =
@@ -335,12 +336,29 @@ class PaymentViewModel @Inject constructor(
         return customDialog
     }
 
-    fun abort() {
+    fun abort(
+        sessionID: String? = null,
+        transactionId: String? = null,
+        onAbort: () -> Unit
+    ) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 plugPag.abort()
             } catch (_: IllegalArgumentException) {
             }
+
+            sessionID?.let {
+                try {
+                    sendAbort(
+                        transactionId = transactionId ?: "",
+                        sessionID = sessionID
+                    )
+                } catch (_: Exception) {
+
+                }
+            }
+
+            onAbort()
         }
     }
 }

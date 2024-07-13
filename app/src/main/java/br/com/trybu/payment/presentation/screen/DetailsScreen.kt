@@ -9,8 +9,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -30,7 +28,7 @@ import br.com.trybu.ui.widget.button.TertiaryButton
 @Composable
 fun DetailsScreen(
     viewModel: PaymentViewModel,
-    transactionType: RetrieveOperationsResponse.Operation.TransactionType,
+    transaction: RetrieveOperationsResponse.Operation.TransactionType,
     isRefund: Boolean,
     sessionID: String,
     eventHandle: (EventFlow?) -> Unit
@@ -45,18 +43,16 @@ fun DetailsScreen(
 
     LaunchedEffect(Unit) {
         if (isRefund) {
-            viewModel.doRefund(transactionType.transactionId)
+            viewModel.doRefund(transaction.transactionId)
         } else {
-            viewModel.doPayment(transactionType, sessionID)
+            viewModel.doPayment(transaction, sessionID)
         }
     }
 
     AppScaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
-            AppTopBar(painter = painterResource(id = R.drawable.logo_elosgate)) {
-                eventHandle(EventFlow.GoToBack)
-            }
+            AppTopBar(painter = painterResource(id = R.drawable.logo_elosgate))
         }
     ) { padding ->
         Column(
@@ -77,7 +73,7 @@ fun DetailsScreen(
                         style = Title2.copy(color = danger_700)
                     )
                 }
-                Text(text = transactionType.htmlString.toAnnotatedString())
+                Text(text = transaction.htmlString.toAnnotatedString())
             }
 
             Text(
@@ -92,7 +88,11 @@ fun DetailsScreen(
             LazyColumn(modifier = Modifier.fillMaxWidth()) {
                 item {
                     TertiaryButton(
-                        onClick = { viewModel.abort() },
+                        onClick = {
+                            viewModel.abort {
+                                eventHandle(EventFlow.GoToBack)
+                            }
+                        },
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(text = "Cancelar Operação")

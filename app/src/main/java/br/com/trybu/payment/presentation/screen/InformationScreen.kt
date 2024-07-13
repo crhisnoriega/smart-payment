@@ -84,7 +84,6 @@ fun InformationScreen(
             reprint = reprint
         )
 
-        Log.i("log", "state.showInfo: ${state.showInfo}")
         when (state.showInfo) {
             is InitializationStatus.ShowInfo -> {
                 AppBottomSheet(
