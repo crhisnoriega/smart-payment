@@ -18,6 +18,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import br.com.trybu.payment.R
 import br.com.trybu.payment.data.model.RetrieveOperationsResponse
+import br.com.trybu.payment.presentation.viewmodel.EventFlow
 import br.com.trybu.payment.presentation.viewmodel.PaymentViewModel
 import br.com.trybu.payment.util.toAnnotatedString
 import br.com.trybu.ui.theme.Title2
@@ -32,18 +33,14 @@ fun DetailsScreen(
     transactionType: RetrieveOperationsResponse.Operation.TransactionType,
     isRefund: Boolean,
     sessionID: String,
-    goInformation: () -> Unit,
-    goBack: () -> Unit
+    eventHandle: (EventFlow?) -> Unit
 ) {
 
-    val state = viewModel.state
-    val uiState by viewModel.uiState.observeAsState()
+    val uiState = viewModel.uiState
+    val eventFlow = viewModel.eventFlow
 
-    LaunchedEffect(uiState) {
-        when (uiState) {
-            "goback" -> goBack()
-            "goinformation" -> goInformation()
-        }
+    LaunchedEffect(eventFlow) {
+        eventHandle(eventFlow)
     }
 
     LaunchedEffect(Unit) {
@@ -58,7 +55,7 @@ fun DetailsScreen(
         modifier = Modifier.fillMaxSize(),
         topBar = {
             AppTopBar(painter = painterResource(id = R.drawable.logo_elosgate)) {
-                goInformation()
+                eventHandle(EventFlow.GoToBack)
             }
         }
     ) { padding ->
@@ -84,7 +81,7 @@ fun DetailsScreen(
             }
 
             Text(
-                text = state.paymentState ?: "",
+                text = uiState.paymentState ?: "",
                 textAlign = TextAlign.Center,
                 style = Title2,
                 modifier = Modifier

@@ -1,5 +1,6 @@
 package br.com.trybu.payment.navigation
 
+import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
@@ -11,6 +12,7 @@ import br.com.trybu.payment.presentation.screen.InformationScreen
 import br.com.trybu.payment.presentation.screen.InitializationScreen
 import br.com.trybu.payment.presentation.screen.OperationsListingScreen
 import br.com.trybu.payment.presentation.screen.PendingTransactionsScreen
+import br.com.trybu.payment.presentation.viewmodel.EventFlow
 import br.com.trybu.payment.presentation.viewmodel.OperationInfoViewModel
 import br.com.trybu.payment.presentation.viewmodel.PaymentViewModel
 import com.google.gson.Gson
@@ -69,11 +71,17 @@ fun MainNavigation(
                 transactionType = transactionType,
                 isRefund = isRefund.toBoolean(),
                 sessionID = sessionID ?: "",
-                goBack = {
-                    controller.navigate(Routes.payment.information)
-                },
-                goInformation = {
-                    controller.popBackStack()
+                eventHandle = { eventFlow ->
+                    Log.i("log", "eventFlow: $eventFlow")
+                    when (eventFlow) {
+                        is EventFlow.GoToBack -> controller.popBackStack()
+                        is EventFlow.GoToInitialization -> controller.navigate(Routes.payment.initialize) {
+                            popUpTo(0)
+                        }
+
+                        is EventFlow.GoToListing -> controller.navigate(Routes.payment.information)
+                        else -> {}
+                    }
                 }
             )
         }

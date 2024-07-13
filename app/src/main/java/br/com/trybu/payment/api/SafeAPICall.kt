@@ -19,8 +19,7 @@ suspend inline fun <T> safeAPICall(
         }.collect {
             (it as? Response<*>)?.let { response ->
                 if (response.code() >= 400) emit(Resources.Error(Exception(), ""))
-            } ?: kotlin.run {
-                emit(Resources.Success(it))
+                else emit(Resources.Success(it))
             }
         }
 }

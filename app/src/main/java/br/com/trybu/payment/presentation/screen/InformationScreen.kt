@@ -34,7 +34,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import br.com.trybu.payment.R
 import br.com.trybu.payment.navigation.Routes
 import br.com.trybu.payment.presentation.viewmodel.InitializationStatus
 import br.com.trybu.payment.presentation.viewmodel.OperationInfoViewModel
@@ -43,7 +42,6 @@ import br.com.trybu.ui.theme.Body1
 import br.com.trybu.ui.theme.Title2
 import br.com.trybu.ui.widget.AppBottomSheet
 import br.com.trybu.ui.widget.AppScaffold
-import br.com.trybu.ui.widget.AppTopBar
 import br.com.trybu.ui.widget.button.PrimaryButton
 import br.com.trybu.ui.widget.loading.LoadablePrimaryButton
 import br.com.trybu.ui.widget.text.AppTextField

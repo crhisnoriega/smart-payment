@@ -33,8 +33,8 @@ import br.com.trybu.ui.widget.AppBottomSheet
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InitializationScreen(
-    viewModel: OperationInfoViewModel = hiltViewModel(),
     modifier: Modifier = Modifier,
+    viewModel: OperationInfoViewModel = hiltViewModel(),
     navigate: (String) -> Unit
 ) {
     Surface {
@@ -45,7 +45,6 @@ fun InitializationScreen(
             viewModel.retrieveKey()
         }
 
-        Log.i("log", "viewModel.state.showInfo: ${viewModel.state.showInfo}")
         when {
             (viewModel.state.showInfo == InitializationStatus.ShowPending) -> {
                 viewModel.initialized()

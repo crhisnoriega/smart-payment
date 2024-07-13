@@ -52,131 +52,10 @@ class PaymentViewModel @Inject constructor(
     private val keyRepository: KeyRepository
 ) : ViewModel() {
 
-    var uiState = MutableLiveData<EventFlow>()
-    var state by mutableStateOf(UIState(operations = listOf(), wasInitialized = true))
+    var eventFlow by mutableStateOf<EventFlow>(EventFlow.None)
+    var uiState by mutableStateOf(UIState(operations = listOf(), wasInitialized = true))
+
     private var transactionFinished = false
-
-    private fun updateUIStateWithResult(result: PlugPagTransactionResult) {
-        state = state.copy(
-            paymentState = if (result.result != 0) result.message?.uppercase() else null,
-            currentTransactionId = null
-        )
-    }
-
-    private suspend fun sendAndPersistTransaction(
-        transaction: Transaction
-    ) {
-        when (transaction.transactionStatus) {
-            TransactionStatus.APPROVED -> sendTransactionResult(transaction)
-            TransactionStatus.REJECTED -> sendAbort(transaction.id, transaction.sessionID)
-            else -> updateTransactionAsStatus(transaction, Status.ERROR_ACK)
-        }
-    }
-
-    private suspend fun sendAbort(transactionId: String, sessionID: String) =
-        CoroutineScope(Dispatchers.IO).launch {
-            safeAPICall {
-                paymentRepository.abortPayment(
-                    transactionId = transactionId,
-                    key = keyRepository.retrieveKey(),
-                    sessionID = sessionID
-                )
-            }.collect {
-                when (it) {
-                    is Resources.Success<*> -> {
-                        transactionDao.findTransaction(transactionId)
-                            ?.let { transaction ->
-                                updateTransactionAsStatus(transaction, Status.ACK_SEND)
-                            }
-                    }
-
-                    else -> {}
-                }
-            }
-        }
-
-    private suspend fun sendTransactionResult(
-        transaction: Transaction,
-        isRefund: Boolean? = false
-    ) {
-        state = state.copy(paymentState = "ENVIANDO...")
-        safeAPICall {
-            if (isRefund == false) {
-                paymentRepository.confirmPayment(
-                    transactionId = transaction.id,
-                    jsonTransaction = transaction.jsonTransaction.sanitizeToSend(),
-                    key = keyRepository.retrieveKey() ?: ""
-                )
-            } else {
-                paymentRepository.confirmRefund(
-                    transactionId = transaction.id,
-                    jsonTransaction = transaction.jsonTransaction.sanitizeToSend(),
-                    key = keyRepository.retrieveKey() ?: ""
-                )
-            }
-        }.collect {
-            when (it) {
-                is Resources.Success<*> -> {
-                    updateTransactionAsStatus(transaction, Status.ACK_SEND)
-                    state = state.copy(paymentState = "ENVIADO COM SUCESSO")
-                    Handler(Looper.getMainLooper()).postDelayed({
-                        stopServiceAndGoBack()
-                    }, 1000)
-                }
-
-                is Resources.Error -> {
-                    updateTransactionAsStatus(transaction, Status.ERROR_ACK)
-                    state = state.copy(paymentState = "ERRO NO ENVIO")
-                    Handler(Looper.getMainLooper()).postDelayed({
-                        stopServiceAndGoBack()
-                    }, 1000)
-                }
-
-                else -> {}
-            }
-        }
-    }
-
-    private fun updateTransactionAsStatus(
-        transaction: Transaction,
-        status: Status
-    ) {
-        val transactionEntity = transaction.copy(
-            jsonTransaction = transaction.jsonTransaction,
-            lastUpdate = currentDate(),
-            status = status
-        )
-        transactionDao.insertOrUpdateTransaction(transactionEntity)
-    }
-
-    private fun stopServiceAndGoBack() {
-        uiState.postValue(EventFlow.GoToBack)
-        plugPag.disposeSubscriber()
-        plugPag.unbindService()
-    }
-
-
-    private fun getCustomPrinterDialog(): PlugPagCustomPrinterLayout {
-        val customDialog = PlugPagCustomPrinterLayout()
-        customDialog.title = "Impressão de comprovante"
-        customDialog.maxTimeShowPopup = 60
-        customDialog.buttonBackgroundColor = "#1462A6"
-        customDialog.buttonBackgroundColorDisabled = "#8F8F8F"
-        return customDialog
-    }
-
-    fun abort() {
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                plugPag.abort()
-            } catch (_: IllegalArgumentException) {
-            }
-        }
-
-        viewModelScope.launch {
-            uiState.value = EventFlow.GoToInitialization
-        }
-    }
 
     fun doPayment(
         operation: RetrieveOperationsResponse.Operation.TransactionType,
@@ -184,9 +63,9 @@ class PaymentViewModel @Inject constructor(
     ) =
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                if (state.currentTransactionId != null) return@launch
-                state =
-                    state.copy(
+                if (uiState.currentTransactionId != null) return@launch
+                uiState =
+                    uiState.copy(
                         currentTransactionId = operation.transactionId,
                         paymentState = "PROCESSANDO"
                     )
@@ -215,15 +94,15 @@ class PaymentViewModel @Inject constructor(
                         )
                         if (transactionFinished) return
 
-                        state = when (data.eventCode) {
+                        uiState = when (data.eventCode) {
                             in TRANSACTION_FINAL_STATES -> {
                                 transactionFinished = true
-                                state.copy(
+                                uiState.copy(
                                     paymentState = data.customMessage
                                 )
                             }
 
-                            else -> state.copy(paymentState = data.customMessage)
+                            else -> uiState.copy(paymentState = data.customMessage)
                         }
                     }
                 })
@@ -272,8 +151,8 @@ class PaymentViewModel @Inject constructor(
     fun doRefund(transactionId: String?) = CoroutineScope(Dispatchers.IO).launch {
 
         try {
-            state =
-                state.copy(
+            uiState =
+                uiState.copy(
                     currentTransactionId = transactionId,
                     paymentState = "PROCESSANDO"
                 )
@@ -289,8 +168,8 @@ class PaymentViewModel @Inject constructor(
                 abort()
             }
 
-            state =
-                state.copy(paymentState = "PROCESSANDO")
+            uiState =
+                uiState.copy(paymentState = "PROCESSANDO")
 
             plugPag.setEventListener(object : PlugPagEventListener {
                 override fun onEvent(data: PlugPagEventData) {
@@ -299,15 +178,15 @@ class PaymentViewModel @Inject constructor(
                     )
                     if (transactionFinished) return
 
-                    state = when (data.eventCode) {
+                    uiState = when (data.eventCode) {
                         in TRANSACTION_FINAL_STATES -> {
                             transactionFinished = true
-                            state.copy(
+                            uiState.copy(
                                 paymentState = data.customMessage
                             )
                         }
 
-                        else -> state.copy(paymentState = data.customMessage)
+                        else -> uiState.copy(paymentState = data.customMessage)
                     }
                 }
             })
@@ -332,9 +211,136 @@ class PaymentViewModel @Inject constructor(
 
             sendTransactionResult(transaction, isRefund = true)
         } catch (e: TransactionException) {
-            state = state.copy(paymentState = e.message)
+            uiState = uiState.copy(paymentState = e.message)
         } catch (e: Exception) {
-            state = state.copy(paymentState = "Erro inesperado, por favor tente mais tarde")
+            uiState = uiState.copy(paymentState = "Erro inesperado, por favor tente mais tarde")
+        }
+    }
+
+    private fun updateUIStateWithResult(result: PlugPagTransactionResult) {
+        uiState = uiState.copy(
+            paymentState = if (result.result != 0) result.message?.uppercase() else null,
+            currentTransactionId = null
+        )
+    }
+
+    private suspend fun sendAndPersistTransaction(
+        transaction: Transaction
+    ) {
+        when (transaction.transactionStatus) {
+            TransactionStatus.APPROVED -> sendTransactionResult(transaction)
+            TransactionStatus.REJECTED -> sendAbort(transaction.id, transaction.sessionID)
+            else -> updateTransactionAsStatus(transaction, Status.ERROR_ACK)
+        }
+    }
+
+    private suspend fun sendAbort(transactionId: String, sessionID: String) =
+        CoroutineScope(Dispatchers.IO).launch {
+            safeAPICall {
+                paymentRepository.abortPayment(
+                    transactionId = transactionId,
+                    key = keyRepository.retrieveKey(),
+                    sessionID = sessionID
+                )
+            }.collect {
+                val transaction = transactionDao.findTransaction(transactionId)
+                    ?: throw Exception("transaction dont found")
+                when (it) {
+                    is Resources.Success<*> -> {
+                        updateTransactionAsStatus(transaction, Status.ACK_SEND)
+                        uiState = uiState.copy(paymentState = "ENVIADO COM SUCESSO")
+                        stopServiceAndForward(EventFlow.GoToBack)
+                    }
+
+                    is Resources.Error -> {
+                        updateTransactionAsStatus(transaction, Status.ERROR_ACK)
+                        uiState = uiState.copy(paymentState = "ERRO NO ENVIO")
+                        stopServiceAndForward(EventFlow.GoToInitialization)
+                    }
+
+                    else -> {}
+                }
+            }
+        }
+
+    private suspend fun sendTransactionResult(
+        transaction: Transaction,
+        isRefund: Boolean? = false
+    ) {
+        uiState = uiState.copy(paymentState = "ENVIANDO...")
+        safeAPICall {
+            if (isRefund == false) {
+                paymentRepository.confirmPayment(
+                    transactionId = transaction.id,
+                    jsonTransaction = transaction.jsonTransaction.sanitizeToSend(),
+                    key = keyRepository.retrieveKey() ?: ""
+                )
+            } else {
+                paymentRepository.confirmRefund(
+                    transactionId = transaction.id,
+                    jsonTransaction = transaction.jsonTransaction.sanitizeToSend(),
+                    key = keyRepository.retrieveKey() ?: ""
+                )
+            }
+        }.collect {
+            when (it) {
+                is Resources.Success<*> -> {
+                    updateTransactionAsStatus(transaction, Status.ACK_SEND)
+                    uiState = uiState.copy(paymentState = "ENVIADO COM SUCESSO")
+                    stopServiceAndForward(EventFlow.GoToInformation)
+                }
+
+                is Resources.Error -> {
+                    updateTransactionAsStatus(transaction, Status.ERROR_ACK)
+                    uiState = uiState.copy(paymentState = "ERRO NO ENVIO")
+                    stopServiceAndForward(EventFlow.GoToInitialization)
+                }
+
+                else -> {}
+            }
+        }
+    }
+
+    private fun stopServiceAndForward(event: EventFlow) {
+        Handler(Looper.getMainLooper()).postDelayed({
+            stopServiceAndGoBack(event)
+        }, 1000)
+    }
+
+    private fun updateTransactionAsStatus(
+        transaction: Transaction,
+        status: Status
+    ) {
+        val transactionEntity = transaction.copy(
+            jsonTransaction = transaction.jsonTransaction,
+            lastUpdate = currentDate(),
+            status = status
+        )
+        transactionDao.insertOrUpdateTransaction(transactionEntity)
+    }
+
+    private fun stopServiceAndGoBack(event: EventFlow) {
+        eventFlow = event
+        plugPag.disposeSubscriber()
+        plugPag.unbindService()
+    }
+
+
+    private fun getCustomPrinterDialog(): PlugPagCustomPrinterLayout {
+        val customDialog = PlugPagCustomPrinterLayout()
+        customDialog.title = "Impressão de comprovante"
+        customDialog.maxTimeShowPopup = 60
+        customDialog.buttonBackgroundColor = "#1462A6"
+        customDialog.buttonBackgroundColorDisabled = "#8F8F8F"
+        return customDialog
+    }
+
+    fun abort() {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                plugPag.abort()
+            } catch (_: IllegalArgumentException) {
+            }
         }
     }
 }
