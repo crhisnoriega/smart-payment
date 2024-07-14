@@ -1,5 +1,6 @@
 package br.com.trybu.payment.data
 
+import android.util.Log
 import br.com.trybu.payment.api.SmartPaymentAPI
 import br.com.trybu.payment.data.model.ConfirmRequest
 import br.com.trybu.payment.data.model.RetrieveKeyRequest

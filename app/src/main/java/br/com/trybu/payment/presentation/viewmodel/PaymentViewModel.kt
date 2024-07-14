@@ -127,6 +127,10 @@ class PaymentViewModel @Inject constructor(
                     )
                 )
 
+                Log.i("log", "plugPagResult: ${Gson().toJson(plugPagResult)}")
+
+
+
                 // update ui
                 updateUIStateWithResult(plugPagResult)
 
@@ -143,6 +147,7 @@ class PaymentViewModel @Inject constructor(
                 // send transaction
                 sendAndPersistTransaction(transaction)
             } catch (e: Exception) {
+                Log.i("log", e.message, e)
                 sendAbort(operation.transactionId ?: "", sessionID)
             }
         }

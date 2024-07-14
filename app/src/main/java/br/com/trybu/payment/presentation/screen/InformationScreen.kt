@@ -131,7 +131,7 @@ fun InformationContent(
     printLast: () -> Unit,
     reprint: Boolean
 ) {
-    var query by remember { mutableStateOf("") }
+    var query by remember { mutableStateOf("11111111111") }
     Column(
         modifier = Modifier
             .fillMaxSize(),
