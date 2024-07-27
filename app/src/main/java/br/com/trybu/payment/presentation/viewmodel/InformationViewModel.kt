@@ -3,6 +3,8 @@ package br.com.trybu.payment.presentation.viewmodel
 import android.content.Context
 import android.net.Uri
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -21,15 +23,13 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import java.util.UUID
 import javax.inject.Inject
 
 
 @HiltViewModel
-class OperationInfoViewModel @Inject constructor(
+class InformationViewModel @Inject constructor(
     @ApplicationContext val context: Context,
     private val paymentRepository: PaymentRepository,
     private val keyRepository: KeyRepository,
@@ -37,16 +37,14 @@ class OperationInfoViewModel @Inject constructor(
     private val plugPag: PlugPag,
 ) : ViewModel() {
 
-    private var _uiEvent = Channel<UIEvent>()
-    val uiEvent = _uiEvent.receiveAsFlow()
-    var _uiState by mutableStateOf<UIState>(UIState.Nothing)
+    //var uiState = MutableLiveData<String>()
 
-    var reprint = mutableStateOf(false)
-    var qrCode = MutableLiveData<String>()
-
+    //var qrCode = MutableLiveData<String>()
+    var state by mutableStateOf(UIState(operations = listOf()))
+    //var reprint = mutableStateOf(false)
 
     fun retrieveOperations(document: String) = viewModelScope.launch {
-        _uiState = UIState.LoadingList
+        state = state.copy(operations = listOf(), isLoading = true, error = null)
         safeAPICall {
             paymentRepository.retrieveOperations(
                 keyRepository.retrieveKey(), document
@@ -55,20 +53,26 @@ class OperationInfoViewModel @Inject constructor(
             when (it) {
                 is Resources.Success<*> -> {
                     val newOperations = it.data as List<RetrieveOperationsResponse.Operation>
-                    _uiState =
-                        if (newOperations.isEmpty()) UIState.EmptyList else UIState.OperationList(
-                            operations = newOperations
-                        )
+                    state = state.copy(
+                        operations = if (newOperations.isEmpty()) null else newOperations,
+                        isLoading = false
+                    )
                 }
 
-                is Resources.Error -> _uiState = UIState.ErrorOperations(
-                    error = it.error.message,
-                )
+                is Resources.Error -> state =
+                    state.copy(
+                        error = it.error.message,
+                        currentTransactionId = null,
+                        operations = null,
+                        isLoading = false
+                    )
 
                 else -> {
 
                 }
             }
+
+            // qrCode.value = ""
         }
     }
 
@@ -81,17 +85,21 @@ class OperationInfoViewModel @Inject constructor(
                     val pendingTransactions = transactionDao.pendingTransaction()
 
                     if (pendingTransactions.isEmpty()) {
-                        _uiState = UIState.InitializeSuccess(
+                        state = state.copy(
                             establishmentName = establishment.establismentName,
-                            establishmentDocument = establishment.document
+                            establishmentDocument = establishment.document,
+                            serialNumber = Build.SERIAL,
+                            initState = InitializationStatus.ShowInfo
                         )
-                        _uiEvent.send(UIEvent.GoToInformation)
                     } else {
-                        _uiEvent.send(UIEvent.GoToPending)
+                        state = state.copy(
+                            initState = InitializationStatus.ShowPending,
+                        )
                     }
                 } else {
-                    _uiState = UIState.InitializeFail
-                    _uiEvent.send(UIEvent.GoToInformation)
+                    state = state.copy(
+                        error = establishment?.errors?.first()?.errorDescription
+                    )
                 }
             }
     }
@@ -106,57 +114,13 @@ class OperationInfoViewModel @Inject constructor(
         return customDialog
     }
 
+    fun dismissError() {
+        state = state.copy(error = null, paymentState = null)
+    }
 
     private fun successPayment(): UIState {
-        return _uiState
-    }
-
-    fun openCamera() {
-
-    }
-
-    fun hideInfo() {
-
-    }
-
-    fun exit() {
-
-    }
-
-    fun qrCode(contents: String) {
-        qrCode.value = Uri.encode(contents)
-    }
-
-    fun printLast() = CoroutineScope(Dispatchers.IO).launch {
-        reprint.value = true
-        plugPag.reprintCustomerReceipt()
-        reprint.value = false
+        return state
     }
 
 
-    fun tryGoToPayment(
-        operation: RetrieveOperationsResponse.Operation.TransactionType,
-        isRefund: String?
-    ) =
-        viewModelScope.launch {
-            val sessionID = UUID.randomUUID().toString()
-            paymentRepository.startPayment(
-                transactionId = operation.transactionId,
-                key = keyRepository.retrieveKey(),
-                sessionID = sessionID
-            ).collect {
-                _uiState = if (it.body()?.errors?.isEmpty() == false) {
-                    UIState.ErrorGoToPayment(errors = it.body()?.errors)
-                } else {
-                    _uiEvent.send(UIEvent.GoToPayment)
-                    UIState.TryPayment(
-                        transactionType = operation,
-                        isRefund = isRefund,
-                        sessionID = sessionID
-                    )
-                }
-
-                return@collect
-            }
-        }
 }

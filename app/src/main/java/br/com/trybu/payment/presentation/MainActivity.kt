@@ -3,20 +3,17 @@ package br.com.trybu.payment.presentation
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.rememberNavController
 import br.com.trybu.payment.navigation.MainNavigation
 import br.com.trybu.payment.presentation.viewmodel.OperationInfoViewModel
-import br.com.trybu.payment.presentation.viewmodel.PaymentViewModel
 import br.com.trybu.ui.theme.AppTheme
 import com.google.zxing.integration.android.IntentIntegrator
 import com.google.zxing.integration.android.IntentResult
 import dagger.hilt.android.AndroidEntryPoint
-import javax.inject.Inject
+import kotlinx.coroutines.flow.catch
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -29,24 +26,13 @@ class MainActivity : ComponentActivity() {
             val navController = rememberNavController()
             AppTheme {
                 MainNavigation(
-                    controller = navController, paymentViewModel = viewModel
+                    controller = navController
                 )
             }
         }
 
-        viewModel.uiState.observe(this) {
-            if (it == "qrcode") {
-                val scanner = IntentIntegrator(this)
-                scanner.setDesiredBarcodeFormats(IntentIntegrator.QR_CODE)
-                scanner.setBeepEnabled(false)
-                scanner.setPrompt("Scanning Code");
-                scanner.initiateScan()
-            }
-
-            if (it == "exit") {
-                finish()
-            }
-        }
+//        vi
+//        viewModel.uiEvent.catch {  }
 
     }
 
@@ -58,7 +44,7 @@ class MainActivity : ComponentActivity() {
                 IntentIntegrator.parseActivityResult(requestCode, resultCode, data)
             if (result.contents == null) {
             } else {
-                viewModel.qrCode(result.contents)
+                //viewModel.qrCode(result.contents)
             }
         }
     }

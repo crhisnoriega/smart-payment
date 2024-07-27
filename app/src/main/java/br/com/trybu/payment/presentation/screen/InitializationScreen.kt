@@ -16,6 +16,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -25,8 +27,9 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.trybu.payment.R
 import br.com.trybu.payment.navigation.Routes
-import br.com.trybu.payment.presentation.viewmodel.InitializationStatus
 import br.com.trybu.payment.presentation.viewmodel.OperationInfoViewModel
+import br.com.trybu.payment.presentation.viewmodel.UIEvent
+import br.com.trybu.payment.presentation.viewmodel.UIState
 import br.com.trybu.ui.theme.Title2
 import br.com.trybu.ui.widget.AppBottomSheet
 
@@ -40,25 +43,24 @@ fun InitializationScreen(
     Surface {
 
         val bottomSheet = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        val uiState = viewModel._uiState
+        val uiEvent by viewModel.uiEvent.collectAsState(initial = UIEvent.None)
 
         LaunchedEffect(Unit) {
             viewModel.retrieveKey()
         }
 
-        Log.i("log", "viewModel.state.showInfo: ${viewModel.state.showInfo}")
-        when {
-            (viewModel.state.showInfo == InitializationStatus.ShowPending) -> {
-                viewModel.initialized()
-                viewModel.state.showInfo = InitializationStatus.ShowNothing
-                navigate(Routes.payment.pending)
+        LaunchedEffect(uiEvent) {
+            when (uiEvent) {
+                is UIEvent.GoToInformation -> navigate(Routes.payment.information)
+                is UIEvent.GoToPending -> navigate(Routes.payment.pending)
+                else -> {}
             }
+        }
 
-            (viewModel.state.wasInitialized == true) -> {
-                viewModel.initialized()
-                navigate(Routes.payment.information)
-            }
-
-            (viewModel.state.wasInitialized == false) -> {
+        Log.i("log", "viewModel.state.showInfo: ${viewModel._uiState}")
+        when (uiState) {
+            is UIState.InitializeFail -> {
                 AppBottomSheet(
                     painter = painterResource(id = br.com.trybu.payment.ui.R.drawable.baseline_store_24),
                     title = "",
@@ -72,7 +74,7 @@ fun InitializationScreen(
                     Column(modifier = Modifier.padding(horizontal = 24.dp)) {
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
-                            text = viewModel.state.error ?: "",
+                            text = viewModel._uiState.error ?: "",
                             style = Title2.copy(fontSize = 18.sp),
                             color = Color.Black
                         )
@@ -80,6 +82,8 @@ fun InitializationScreen(
                     }
                 }
             }
+
+            else -> {}
         }
         Box(
             modifier = modifier.fillMaxSize()

@@ -18,16 +18,21 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.trybu.payment.R
 import br.com.trybu.payment.data.model.RetrieveOperationsResponse
 import br.com.trybu.payment.navigation.Routes
 import br.com.trybu.payment.presentation.viewmodel.OperationInfoViewModel
+import br.com.trybu.payment.presentation.viewmodel.UIEvent
+import br.com.trybu.payment.presentation.viewmodel.UIState
 import br.com.trybu.payment.util.toAnnotatedString
 import br.com.trybu.payment.util.toPaymentType
 import br.com.trybu.ui.theme.AppTheme
@@ -43,7 +48,7 @@ import java.math.BigDecimal
 
 @Composable
 fun OperationsListingScreen(
-    viewModel: OperationInfoViewModel,
+    viewModel: OperationInfoViewModel = hiltViewModel(),
     query: String,
     route: (String) -> Unit
 ) {
@@ -51,25 +56,24 @@ fun OperationsListingScreen(
         viewModel.retrieveOperations(query)
     }
 
-    val state = viewModel.state
+    val uiState = viewModel._uiState
+    val uiEvent by viewModel.uiEvent.collectAsState(initial = UIEvent.None)
 
-    LaunchedEffect(state) {
-        if (state.transactionType != null) {
-            val routeStr = Routes.payment.details
-                .replace(
-                    "{operation}",
-                    Uri.encode(Gson().toJson(state.transactionType))
-                )
-                .replace("{isRefund}", state.isRefund ?: "false")
-                .replace("{sessionID}", state.sessionID ?: "")
-            route(routeStr)
+    LaunchedEffect(uiEvent) {
+        when (uiEvent) {
+            is UIEvent.GoToDetails -> {
 
-            state.transactionType = null
-            state.isRefund = null
-        }
+                val routeStr = Routes.payment.details
+                    .replace(
+                        "{operation}",
+                        Uri.encode(Gson().toJson(uiState.transactionType))
+                    )
+                    .replace("{isRefund}", uiState.isRefund ?: "false")
+                    .replace("{sessionID}", uiState.sessionID ?: "")
+                route(routeStr)
+            }
 
-        if (state.errors != null) {
-            route(Routes.payment.information)
+            else -> {}
         }
     }
 
@@ -83,22 +87,31 @@ fun OperationsListingScreen(
             }
         }
     ) {
-
-        when {
-            state.isLoading == true -> LoadingFullScreen()
-            state.operations == null -> EmptyList(message = state.error ?: "")
-            state.operations != null && state.operations.isNotEmpty() == true -> LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(top = 60.dp)
-            ) {
-                items(state.operations) { item ->
-                    OperationCard(operation = item) { selection ->
-                        viewModel.tryGoToPayment(selection, item.isRefund.toString())
+        when (uiState) {
+            is UIState.OperationList -> {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(top = 60.dp)
+                ) {
+                    items(uiState.operations ?: emptyList()) { item ->
+                        OperationCard(operation = item) { selection ->
+                            viewModel.tryGoToPayment(selection, item.isRefund.toString())
+                        }
                     }
                 }
             }
 
+            is UIState.EmptyList ->
+                EmptyList(message = uiState.error ?: "")
+
+            is UIState.LoadingList -> LoadingFullScreen()
+
+            is UIState.ErrorGoToPayment -> {
+
+            }
+
+            else -> {}
         }
     }
 }

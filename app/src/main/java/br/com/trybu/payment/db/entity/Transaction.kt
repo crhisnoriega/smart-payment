@@ -15,7 +15,8 @@ data class Transaction(
     val status: Status,
     val transactionStatus: TransactionStatus,
     val transactionType: TransactionType,
-    val sessionID: String
+    val sessionID: String,
+    val originOperationJson: String
 )
 
 enum class Status {

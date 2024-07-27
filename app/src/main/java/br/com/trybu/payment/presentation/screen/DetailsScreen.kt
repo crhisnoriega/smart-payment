@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.trybu.payment.R
 import br.com.trybu.payment.data.model.RetrieveOperationsResponse
 import br.com.trybu.payment.presentation.viewmodel.PaymentViewModel
@@ -28,7 +29,7 @@ import br.com.trybu.ui.widget.button.TertiaryButton
 
 @Composable
 fun DetailsScreen(
-    viewModel: PaymentViewModel,
+    viewModel: PaymentViewModel = hiltViewModel(),
     transactionType: RetrieveOperationsResponse.Operation.TransactionType,
     isRefund: Boolean,
     sessionID: String,

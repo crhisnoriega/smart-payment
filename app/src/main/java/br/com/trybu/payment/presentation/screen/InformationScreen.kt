@@ -1,7 +1,6 @@
 package br.com.trybu.payment.presentation.screen
 
 import android.net.Uri
-import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -34,16 +33,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import br.com.trybu.payment.R
 import br.com.trybu.payment.navigation.Routes
-import br.com.trybu.payment.presentation.viewmodel.InitializationStatus
 import br.com.trybu.payment.presentation.viewmodel.OperationInfoViewModel
+import br.com.trybu.payment.presentation.viewmodel.UIState
 import br.com.trybu.ui.theme.AppTheme
 import br.com.trybu.ui.theme.Body1
 import br.com.trybu.ui.theme.Title2
 import br.com.trybu.ui.widget.AppBottomSheet
 import br.com.trybu.ui.widget.AppScaffold
-import br.com.trybu.ui.widget.AppTopBar
 import br.com.trybu.ui.widget.button.PrimaryButton
 import br.com.trybu.ui.widget.loading.LoadablePrimaryButton
 import br.com.trybu.ui.widget.text.AppTextField
@@ -56,10 +53,9 @@ fun InformationScreen(
 ) {
 
     val bottomSheet = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val state = viewModel.state
+    val uiState = viewModel._uiState
     val qrCode by viewModel.qrCode.observeAsState()
-    var reprint by viewModel.reprint
-
+    var reprint by remember { mutableStateOf(true) }
 
     LaunchedEffect(qrCode) {
         if (!qrCode.isNullOrEmpty()) {
@@ -86,9 +82,8 @@ fun InformationScreen(
             reprint = reprint
         )
 
-        Log.i("log", "state.showInfo: ${state.showInfo}")
-        when (state.showInfo) {
-            is InitializationStatus.ShowInfo -> {
+        when (uiState) {
+            is UIState.InitializeSuccess -> {
                 AppBottomSheet(
                     painter = painterResource(id = br.com.trybu.payment.ui.R.drawable.baseline_store_24),
                     title = "Dados do estabelecimento",
@@ -102,28 +97,21 @@ fun InformationScreen(
                             style = Title2.copy(fontSize = 18.sp),
                             color = Color.Black
                         )
-                        Text(text = state.establishmentDocument ?: "", style = Body1)
+                        Text(text = uiState.establishmentDocument ?: "", style = Body1)
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
                             text = "Razão Social",
                             style = Title2.copy(fontSize = 18.sp),
                             color = Color.Black
                         )
-                        Text(text = state.establishmentName ?: "", style = Body1)
+                        Text(text = uiState.establishmentName ?: "", style = Body1)
                         Spacer(modifier = Modifier.height(50.dp))
                     }
                 }
             }
 
-            is InitializationStatus.ShowPending -> {
-                route(Routes.payment.pending)
-            }
-
             else -> {}
         }
-
-        //state.showInfo = InitializationStatus.ShowNothing
-
     }
 }
 
