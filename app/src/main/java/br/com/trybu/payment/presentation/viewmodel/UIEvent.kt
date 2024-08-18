@@ -8,6 +8,7 @@ sealed class UIEvent {
     data object GoToDetails : UIEvent()
     data object GoToQRCode : UIEvent()
     data object None : UIEvent()
+    data object GoToBack : UIEvent()
 }
 
 //

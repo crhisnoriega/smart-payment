@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.trybu.payment.navigation.Routes
+import br.com.trybu.payment.presentation.viewmodel.InformationViewModel
 import br.com.trybu.payment.presentation.viewmodel.OperationInfoViewModel
 import br.com.trybu.payment.presentation.viewmodel.UIState
 import br.com.trybu.ui.theme.AppTheme
@@ -48,9 +49,14 @@ import br.com.trybu.ui.widget.text.AppTextField
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InformationScreen(
-    viewModel: OperationInfoViewModel = hiltViewModel(),
+    viewModel: InformationViewModel = hiltViewModel(),
+    initializeSuccess: UIState.InitializeSuccess,
     route: (String) -> Unit,
 ) {
+
+    LaunchedEffect(Unit) {
+        viewModel.updateUIState(initializeSuccess)
+    }
 
     val bottomSheet = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val uiState = viewModel._uiState

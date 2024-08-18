@@ -10,6 +10,7 @@ import br.com.trybu.payment.presentation.screen.InformationScreen
 import br.com.trybu.payment.presentation.screen.InitializationScreen
 import br.com.trybu.payment.presentation.screen.OperationsListingScreen
 import br.com.trybu.payment.presentation.screen.PendingTransactionsScreen
+import br.com.trybu.payment.presentation.viewmodel.UIState
 import com.google.gson.Gson
 
 @Composable
@@ -24,14 +25,16 @@ fun MainNavigation(
     ) {
         composable(route = Routes.payment.initialize) {
             InitializationScreen { route ->
-                controller.navigate(route){
+                controller.navigate(route) {
                     popUpTo(0)
                 }
             }
         }
 
         composable(route = Routes.payment.information) { entry ->
-            InformationScreen { route ->
+            val state = entry.arguments?.getString("state")
+            val intializationState = Gson().fromJson(state, UIState.InitializeSuccess::class.java)
+            InformationScreen(initializeSuccess = intializationState) { route ->
                 controller.navigate(route)
             }
         }

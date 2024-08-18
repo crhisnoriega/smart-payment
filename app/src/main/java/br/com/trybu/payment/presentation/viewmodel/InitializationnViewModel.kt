@@ -29,51 +29,17 @@ import javax.inject.Inject
 
 
 @HiltViewModel
-class OperationInfoViewModel @Inject constructor(
+class InitializationnViewModel @Inject constructor(
     @ApplicationContext val context: Context,
     private val paymentRepository: PaymentRepository,
     private val keyRepository: KeyRepository,
     private val transactionDao: TransactionDao,
-    private val plugPag: PlugPag,
 ) : ViewModel() {
 
     private var _uiEvent = Channel<UIEvent>()
     val uiEvent = _uiEvent.receiveAsFlow()
+    var _uiState by mutableStateOf<UIState>(UIState.Nothing)
 
-    var _uiState by mutableStateOf<UIState>(UIState.TryPayment())
-
-
-
-
-
-
-
-    fun retrieveOperations(document: String) = viewModelScope.launch {
-        _uiState = UIState.LoadingList
-        safeAPICall {
-            paymentRepository.retrieveOperations(
-                keyRepository.retrieveKey(), document
-            )
-        }.collect {
-            when (it) {
-                is Resources.Success<*> -> {
-                    val newOperations = it.data as List<RetrieveOperationsResponse.Operation>
-                    _uiState =
-                        if (newOperations.isEmpty()) UIState.EmptyList else UIState.OperationList(
-                            operations = newOperations
-                        )
-                }
-
-                is Resources.Error -> _uiState = UIState.ErrorOperations(
-                    error = it.error.message,
-                )
-
-                else -> {
-
-                }
-            }
-        }
-    }
 
     fun retrieveKey() = CoroutineScope(Dispatchers.IO).launch {
         paymentRepository.retrieveKey(serialNumber = Build.SERIAL)
@@ -99,55 +65,7 @@ class OperationInfoViewModel @Inject constructor(
             }
     }
 
-
-    private fun getCustomPrinterDialog(): PlugPagCustomPrinterLayout {
-        val customDialog = PlugPagCustomPrinterLayout()
-        customDialog.title = "Impressão de comprovante"
-        customDialog.maxTimeShowPopup = 60
-        customDialog.buttonBackgroundColor = "#1462A6"
-        customDialog.buttonBackgroundColorDisabled = "#8F8F8F"
-        return customDialog
-    }
-
-
-    private fun successPayment(): UIState {
-        return _uiState
-    }
-
-
     fun exit() {
 
     }
-
-//    fun qrCode(contents: String) {
-//        qrCode.value = Uri.encode(contents)
-//    }
-
-
-
-    fun tryGoToPayment(
-        operation: RetrieveOperationsResponse.Operation.TransactionType,
-        isRefund: String?
-    ) =
-        viewModelScope.launch {
-            val sessionID = UUID.randomUUID().toString()
-            paymentRepository.startPayment(
-                transactionId = operation.transactionId,
-                key = keyRepository.retrieveKey(),
-                sessionID = sessionID
-            ).collect {
-                _uiState = if (it.body()?.errors?.isEmpty() == false) {
-                    UIState.ErrorGoToPayment(errors = it.body()?.errors)
-                } else {
-                    _uiEvent.send(UIEvent.GoToPayment)
-                    UIState.TryPayment(
-                        transactionType = operation,
-                        isRefund = isRefund,
-                        sessionID = sessionID
-                    )
-                }
-
-                return@collect
-            }
-        }
 }

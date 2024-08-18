@@ -38,7 +38,10 @@ import com.google.gson.Gson
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import java.math.BigDecimal
 import javax.inject.Inject
 
@@ -52,8 +55,10 @@ class PaymentViewModel @Inject constructor(
     private val keyRepository: KeyRepository
 ) : ViewModel() {
 
-    var uiState = MutableLiveData<String>()
-    var state by mutableStateOf(UIState(operations = listOf()))
+    var uiState by mutableStateOf(UIState.PaymentData())
+    private var _uiEvent = Channel<UIEvent>()
+    val uiEvent = _uiEvent.receiveAsFlow()
+
     private var transactionFinished = false
 
 
@@ -63,9 +68,9 @@ class PaymentViewModel @Inject constructor(
     ) =
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                if (state.currentTransactionId != null) return@launch
-                state =
-                    state.copy(
+                if (uiState.currentTransactionId != null) return@launch
+                uiState =
+                    uiState.copy(
                         currentTransactionId = operation.transactionId,
                         paymentState = "PROCESSANDO"
                     )
@@ -95,15 +100,15 @@ class PaymentViewModel @Inject constructor(
                         )
                         if (transactionFinished) return
 
-                        state = when (data.eventCode) {
+                        uiState = when (data.eventCode) {
                             in TRANSACTION_FINAL_STATES -> {
                                 transactionFinished = true
-                                state.copy(
+                                uiState.copy(
                                     paymentState = data.customMessage
                                 )
                             }
 
-                            else -> state.copy(paymentState = data.customMessage)
+                            else -> uiState.copy(paymentState = data.customMessage)
                         }
                     }
                 })
@@ -152,8 +157,8 @@ class PaymentViewModel @Inject constructor(
     fun doRefund(transactionId: String?) = CoroutineScope(Dispatchers.IO).launch {
 
         try {
-            state =
-                state.copy(
+            uiState =
+                uiState.copy(
                     currentTransactionId = transactionId,
                     paymentState = "PROCESSANDO"
                 )
@@ -169,8 +174,8 @@ class PaymentViewModel @Inject constructor(
                 abort()
             }
 
-            state =
-                state.copy(paymentState = "PROCESSANDO")
+            uiState =
+                uiState.copy(paymentState = "PROCESSANDO")
 
             plugPag.setEventListener(object : PlugPagEventListener {
                 override fun onEvent(data: PlugPagEventData) {
@@ -179,15 +184,15 @@ class PaymentViewModel @Inject constructor(
                     )
                     if (transactionFinished) return
 
-                    state = when (data.eventCode) {
+                    uiState = when (data.eventCode) {
                         in TRANSACTION_FINAL_STATES -> {
                             transactionFinished = true
-                            state.copy(
+                            uiState.copy(
                                 paymentState = data.customMessage
                             )
                         }
 
-                        else -> state.copy(paymentState = data.customMessage)
+                        else -> uiState.copy(paymentState = data.customMessage)
                     }
                 }
             })
@@ -212,14 +217,14 @@ class PaymentViewModel @Inject constructor(
 
             sendTransactionResult(transaction, isRefund = true)
         } catch (e: TransactionException) {
-            state = state.copy(paymentState = e.message)
+            uiState = uiState.copy(paymentState = e.message)
         } catch (e: Exception) {
-            state = state.copy(paymentState = "Erro inesperado, por favor tente mais tarde")
+            uiState = uiState.copy(paymentState = "Erro inesperado, por favor tente mais tarde")
         }
     }
 
     private fun updateUIStateWithResult(result: PlugPagTransactionResult) {
-        state = state.copy(
+        uiState = uiState.copy(
             paymentState = if (result.result != 0) result.message?.uppercase() else null,
             currentTransactionId = null
         )
@@ -261,7 +266,7 @@ class PaymentViewModel @Inject constructor(
         transaction: Transaction,
         isRefund: Boolean? = false
     ) {
-        state = state.copy(paymentState = "ENVIANDO...")
+        uiState = uiState.copy(paymentState = "ENVIANDO...")
         safeAPICall {
             if (isRefund == false) {
                 paymentRepository.confirmPayment(
@@ -280,7 +285,7 @@ class PaymentViewModel @Inject constructor(
             when (it) {
                 is Resources.Success<*> -> {
                     updateTransactionAsStatus(transaction, Status.ACK_SEND)
-                    state = state.copy(paymentState = "ENVIADO COM SUCESSO")
+                    uiState = uiState.copy(paymentState = "ENVIADO COM SUCESSO")
                     Handler(Looper.getMainLooper()).postDelayed({
                         stopServiceAndGoBack()
                     }, 1000)
@@ -288,7 +293,7 @@ class PaymentViewModel @Inject constructor(
 
                 is Resources.Error -> {
                     updateTransactionAsStatus(transaction, Status.ERROR_ACK)
-                    state = state.copy(paymentState = "ERRO NO ENVIO")
+                    uiState = uiState.copy(paymentState = "ERRO NO ENVIO")
                     Handler(Looper.getMainLooper()).postDelayed({
                         stopServiceAndGoBack()
                     }, 1000)
@@ -312,9 +317,10 @@ class PaymentViewModel @Inject constructor(
     }
 
     private fun stopServiceAndGoBack() {
-        uiState.postValue("goback")
+
         plugPag.disposeSubscriber()
         plugPag.unbindService()
+        runBlocking { _uiEvent.send(UIEvent.GoToBack) }
     }
 
 
@@ -336,7 +342,7 @@ class PaymentViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-            uiState.value = "goinformation"
+            _uiEvent.send(UIEvent.GoToInformation)
         }
     }
 }

@@ -1,5 +1,6 @@
 package br.com.trybu.payment.presentation.screen
 
+import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
@@ -27,16 +28,18 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.trybu.payment.R
 import br.com.trybu.payment.navigation.Routes
+import br.com.trybu.payment.presentation.viewmodel.InitializationnViewModel
 import br.com.trybu.payment.presentation.viewmodel.OperationInfoViewModel
 import br.com.trybu.payment.presentation.viewmodel.UIEvent
 import br.com.trybu.payment.presentation.viewmodel.UIState
 import br.com.trybu.ui.theme.Title2
 import br.com.trybu.ui.widget.AppBottomSheet
+import com.google.gson.Gson
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InitializationScreen(
-    viewModel: OperationInfoViewModel = hiltViewModel(),
+    viewModel: InitializationnViewModel = hiltViewModel(),
     modifier: Modifier = Modifier,
     navigate: (String) -> Unit
 ) {
@@ -52,7 +55,8 @@ fun InitializationScreen(
 
         LaunchedEffect(uiEvent) {
             when (uiEvent) {
-                is UIEvent.GoToInformation -> navigate(Routes.payment.information)
+                is UIEvent.GoToInformation -> navigate(Routes.payment.information.replace("{state}",
+                    Uri.encode(Gson().toJson(viewModel._uiState))))
                 is UIEvent.GoToPending -> navigate(Routes.payment.pending)
                 else -> {}
             }

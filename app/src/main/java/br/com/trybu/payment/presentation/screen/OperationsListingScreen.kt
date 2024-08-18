@@ -62,14 +62,14 @@ fun OperationsListingScreen(
     LaunchedEffect(uiEvent) {
         when (uiEvent) {
             is UIEvent.GoToDetails -> {
-
+                val tryPayment = uiState as UIState.TryPayment
                 val routeStr = Routes.payment.details
                     .replace(
                         "{operation}",
-                        Uri.encode(Gson().toJson(uiState.transactionType))
+                        Uri.encode(Gson().toJson(tryPayment.transactionType))
                     )
-                    .replace("{isRefund}", uiState.isRefund ?: "false")
-                    .replace("{sessionID}", uiState.sessionID ?: "")
+                    .replace("{isRefund}", tryPayment.isRefund ?: "false")
+                    .replace("{sessionID}", tryPayment.sessionID ?: "")
                 route(routeStr)
             }
 
@@ -100,15 +100,6 @@ fun OperationsListingScreen(
                         }
                     }
                 }
-            }
-
-            is UIState.EmptyList ->
-                EmptyList(message = uiState.error ?: "")
-
-            is UIState.LoadingList -> LoadingFullScreen()
-
-            is UIState.ErrorGoToPayment -> {
-
             }
 
             else -> {}

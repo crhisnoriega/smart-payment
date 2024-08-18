@@ -1,5 +1,6 @@
 package br.com.trybu.payment.presentation.screen
 
+import android.net.Uri
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -9,8 +10,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -19,13 +20,16 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.trybu.payment.R
 import br.com.trybu.payment.data.model.RetrieveOperationsResponse
+import br.com.trybu.payment.navigation.Routes
 import br.com.trybu.payment.presentation.viewmodel.PaymentViewModel
+import br.com.trybu.payment.presentation.viewmodel.UIEvent
 import br.com.trybu.payment.util.toAnnotatedString
 import br.com.trybu.ui.theme.Title2
 import br.com.trybu.ui.theme.danger_700
 import br.com.trybu.ui.widget.AppScaffold
 import br.com.trybu.ui.widget.AppTopBar
 import br.com.trybu.ui.widget.button.TertiaryButton
+import com.google.gson.Gson
 
 @Composable
 fun DetailsScreen(
@@ -37,13 +41,14 @@ fun DetailsScreen(
     goBack: () -> Unit
 ) {
 
-    val state = viewModel.state
-    val uiState by viewModel.uiState.observeAsState()
+    val uiState = viewModel.uiState
+    val uiEvent by viewModel.uiEvent.collectAsState(initial = UIEvent.None)
 
-    LaunchedEffect(uiState) {
-        when (uiState) {
-            "goback" -> goBack()
-            "goinformation" -> goInformation()
+    LaunchedEffect(uiEvent) {
+        when (uiEvent) {
+            is UIEvent.GoToInformation -> goInformation()
+            is UIEvent.GoToBack -> goBack()
+            else -> {}
         }
     }
 
@@ -85,7 +90,7 @@ fun DetailsScreen(
             }
 
             Text(
-                text = state.paymentState ?: "",
+                text = uiState.paymentState ?: "",
                 textAlign = TextAlign.Center,
                 style = Title2,
                 modifier = Modifier
