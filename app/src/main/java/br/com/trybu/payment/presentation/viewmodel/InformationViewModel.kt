@@ -49,10 +49,12 @@ class InformationViewModel @Inject constructor(
 
 
     fun updateUIState(uiState: UIState) {
-        _uiState = uiState
-        Handler(Looper.getMainLooper()).postDelayed({
-            _uiState = UIState.HideInformation
-        }, 2000)
+        if (_uiState !is UIState.HideInformation) {
+            _uiState = uiState
+            Handler(Looper.getMainLooper()).postDelayed({
+                _uiState = UIState.HideInformation
+            }, 2000)
+        }
     }
 
 

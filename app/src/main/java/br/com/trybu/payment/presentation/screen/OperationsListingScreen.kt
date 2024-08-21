@@ -61,7 +61,7 @@ fun OperationsListingScreen(
 
     LaunchedEffect(uiEvent) {
         when (uiEvent) {
-            is UIEvent.GoToDetails -> {
+            is UIEvent.GoToPayment -> {
                 val tryPayment = uiState as UIState.TryPayment
                 val routeStr = Routes.payment.details
                     .replace(

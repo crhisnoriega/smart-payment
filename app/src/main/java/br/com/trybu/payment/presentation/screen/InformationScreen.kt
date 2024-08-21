@@ -1,6 +1,7 @@
 package br.com.trybu.payment.presentation.screen
 
 import android.net.Uri
+import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -52,6 +53,9 @@ fun InformationScreen(
     initializeSuccess: UIState.InitializeSuccess,
     route: (String) -> Unit,
 ) {
+    Log.d("log", "InformationScreen: $initializeSuccess")
+    Log.d("log", "viewModel: $viewModel")
+
 
     LaunchedEffect(Unit) {
         viewModel.updateUIState(initializeSuccess)

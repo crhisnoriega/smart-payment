@@ -16,7 +16,6 @@ import com.google.gson.Gson
 @Composable
 fun MainNavigation(
     controller: NavHostController
-
 ) {
     NavHost(
         navController = controller,
@@ -25,9 +24,7 @@ fun MainNavigation(
     ) {
         composable(route = Routes.payment.initialize) {
             InitializationScreen { route ->
-                controller.navigate(route) {
-                    popUpTo(0)
-                }
+                controller.navigate(route)
             }
         }
 
@@ -49,9 +46,7 @@ fun MainNavigation(
         composable(route = Routes.payment.pending) {
             PendingTransactionsScreen(
                 goToInput = {
-                    controller.navigate(Routes.payment.information) {
-                        popUpTo(0)
-                    }
+                    controller.navigate(Routes.payment.information)
                 },
                 onBackPress = {
                     controller.navigate(Routes.payment.initialize)

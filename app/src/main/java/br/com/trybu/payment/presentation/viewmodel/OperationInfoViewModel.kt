@@ -75,55 +75,6 @@ class OperationInfoViewModel @Inject constructor(
         }
     }
 
-    fun retrieveKey() = CoroutineScope(Dispatchers.IO).launch {
-        paymentRepository.retrieveKey(serialNumber = Build.SERIAL)
-            .collect { establishment ->
-                if (establishment?.errors?.isEmpty() == true) {
-                    establishment.key.let { keyRepository.persisKey(it) }
-
-                    val pendingTransactions = transactionDao.pendingTransaction()
-
-                    if (pendingTransactions.isEmpty()) {
-                        _uiState = UIState.InitializeSuccess(
-                            establishmentName = establishment.establismentName,
-                            establishmentDocument = establishment.document
-                        )
-                        _uiEvent.send(UIEvent.GoToInformation)
-                    } else {
-                        _uiEvent.send(UIEvent.GoToPending)
-                    }
-                } else {
-                    _uiState = UIState.InitializeFail
-                    _uiEvent.send(UIEvent.GoToInformation)
-                }
-            }
-    }
-
-
-    private fun getCustomPrinterDialog(): PlugPagCustomPrinterLayout {
-        val customDialog = PlugPagCustomPrinterLayout()
-        customDialog.title = "Impressão de comprovante"
-        customDialog.maxTimeShowPopup = 60
-        customDialog.buttonBackgroundColor = "#1462A6"
-        customDialog.buttonBackgroundColorDisabled = "#8F8F8F"
-        return customDialog
-    }
-
-
-    private fun successPayment(): UIState {
-        return _uiState
-    }
-
-
-    fun exit() {
-
-    }
-
-//    fun qrCode(contents: String) {
-//        qrCode.value = Uri.encode(contents)
-//    }
-
-
 
     fun tryGoToPayment(
         operation: RetrieveOperationsResponse.Operation.TransactionType,

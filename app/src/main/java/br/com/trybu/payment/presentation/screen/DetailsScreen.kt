@@ -61,7 +61,7 @@ fun DetailsScreen(
         modifier = Modifier.fillMaxSize(),
         topBar = {
             AppTopBar(painter = painterResource(id = R.drawable.logo_elosgate)) {
-                goInformation()
+                viewModel.abort()
             }
         }
     ) { padding ->
