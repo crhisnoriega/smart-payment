@@ -3,6 +3,8 @@ package br.com.trybu.payment.presentation.viewmodel
 import android.content.Context
 import android.net.Uri
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -34,8 +36,6 @@ class InformationViewModel @Inject constructor(
     private val plugPag: PlugPag
 ) : ViewModel() {
 
-    private var _uiEvent = Channel<UIEvent>()
-    val uiEvent = _uiEvent.receiveAsFlow()
     var reprint = mutableStateOf(false)
     var _uiState by mutableStateOf<UIState>(UIState.Nothing)
     var qrCode = MutableLiveData<String>()
@@ -50,6 +50,9 @@ class InformationViewModel @Inject constructor(
 
     fun updateUIState(uiState: UIState) {
         _uiState = uiState
+        Handler(Looper.getMainLooper()).postDelayed({
+            _uiState = UIState.HideInformation
+        }, 2000)
     }
 
 

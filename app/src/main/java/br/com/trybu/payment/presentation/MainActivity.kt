@@ -31,8 +31,7 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-//        vi
-//        viewModel.uiEvent.catch {  }
+
 
     }
 

@@ -1,6 +1,5 @@
 package br.com.trybu.payment.presentation.screen
 
-import android.net.Uri
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -20,7 +19,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.trybu.payment.R
 import br.com.trybu.payment.data.model.RetrieveOperationsResponse
-import br.com.trybu.payment.navigation.Routes
 import br.com.trybu.payment.presentation.viewmodel.PaymentViewModel
 import br.com.trybu.payment.presentation.viewmodel.UIEvent
 import br.com.trybu.payment.util.toAnnotatedString
@@ -29,7 +27,6 @@ import br.com.trybu.ui.theme.danger_700
 import br.com.trybu.ui.widget.AppScaffold
 import br.com.trybu.ui.widget.AppTopBar
 import br.com.trybu.ui.widget.button.TertiaryButton
-import com.google.gson.Gson
 
 @Composable
 fun DetailsScreen(

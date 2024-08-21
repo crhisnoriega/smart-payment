@@ -29,7 +29,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.trybu.payment.R
 import br.com.trybu.payment.navigation.Routes
 import br.com.trybu.payment.presentation.viewmodel.InitializationnViewModel
-import br.com.trybu.payment.presentation.viewmodel.OperationInfoViewModel
 import br.com.trybu.payment.presentation.viewmodel.UIEvent
 import br.com.trybu.payment.presentation.viewmodel.UIState
 import br.com.trybu.ui.theme.Title2

@@ -77,8 +77,6 @@ fun OperationsListingScreen(
         }
     }
 
-
-
     AppScaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
@@ -100,6 +98,10 @@ fun OperationsListingScreen(
                         }
                     }
                 }
+            }
+
+            is UIState.LoadingList -> {
+                LoadingFullScreen()
             }
 
             else -> {}

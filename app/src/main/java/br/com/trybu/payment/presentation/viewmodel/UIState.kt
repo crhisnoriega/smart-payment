@@ -37,6 +37,7 @@ sealed class UIState(
         val sessionID: String? = null,
     ) : UIState()
 
+    data object HideInformation : UIState()
 }
 
 

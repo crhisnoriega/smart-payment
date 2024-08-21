@@ -35,7 +35,6 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.trybu.payment.navigation.Routes
 import br.com.trybu.payment.presentation.viewmodel.InformationViewModel
-import br.com.trybu.payment.presentation.viewmodel.OperationInfoViewModel
 import br.com.trybu.payment.presentation.viewmodel.UIState
 import br.com.trybu.ui.theme.AppTheme
 import br.com.trybu.ui.theme.Body1
@@ -61,7 +60,7 @@ fun InformationScreen(
     val bottomSheet = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val uiState = viewModel._uiState
     val qrCode by viewModel.qrCode.observeAsState()
-    var reprint by remember { mutableStateOf(true) }
+    var reprint by remember { mutableStateOf(false) }
 
     LaunchedEffect(qrCode) {
         if (!qrCode.isNullOrEmpty()) {
@@ -83,7 +82,9 @@ fun InformationScreen(
                 route(goTo)
             },
             printLast = {
+                reprint = true
                 viewModel.printLast()
+
             },
             reprint = reprint
         )
@@ -116,6 +117,11 @@ fun InformationScreen(
                 }
             }
 
+            is UIState.HideInformation -> {
+                // do nothing
+            }
+
+
             else -> {}
         }
     }
@@ -128,10 +134,9 @@ fun InformationContent(
     printLast: () -> Unit,
     reprint: Boolean
 ) {
-    var query by remember { mutableStateOf("") }
+    var query by remember { mutableStateOf("11111111111") }
     Column(
-        modifier = Modifier
-            .fillMaxSize(),
+        modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.SpaceBetween
     )
     {
