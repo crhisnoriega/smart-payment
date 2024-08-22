@@ -30,7 +30,11 @@ fun MainNavigation(
 
         composable(route = Routes.payment.information) { entry ->
             val state = entry.arguments?.getString("state")
-            val intializationState = Gson().fromJson(state, UIState.InitializeSuccess::class.java)
+            val intializationState = try {
+                Gson().fromJson(state, UIState.InitializeSuccess::class.java)
+            } catch (e: Exception) {
+                null
+            }
             InformationScreen(initializeSuccess = intializationState) { route ->
                 controller.navigate(route)
             }
@@ -63,7 +67,11 @@ fun MainNavigation(
                 isRefund = isRefund.toBoolean(),
                 sessionID = sessionID ?: "",
                 goBack = { controller.popBackStack() },
-                goInformation = { controller.navigate(Routes.payment.information) })
+                goInformation = {
+                    controller.navigate(Routes.payment.information) {
+                        popUpTo(0)
+                    }
+                })
         }
     }
 }

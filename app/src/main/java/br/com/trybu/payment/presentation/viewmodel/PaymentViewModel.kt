@@ -6,6 +6,7 @@ import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.core.os.postDelayed
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -235,7 +236,13 @@ class PaymentViewModel @Inject constructor(
     ) {
         when (transaction.transactionStatus) {
             TransactionStatus.APPROVED -> sendTransactionResult(transaction)
-            TransactionStatus.REJECTED -> sendAbort(transaction.id, transaction.sessionID)
+            TransactionStatus.REJECTED -> {
+                sendAbort(transaction.id, transaction.sessionID)
+                Handler(Looper.getMainLooper()).postDelayed({
+                    stopServiceAndGoBack()
+                }, 1000)
+            }
+
             else -> updateTransactionAsStatus(transaction, Status.ERROR_ACK)
         }
     }
@@ -287,7 +294,7 @@ class PaymentViewModel @Inject constructor(
                     updateTransactionAsStatus(transaction, Status.ACK_SEND)
                     uiState = uiState.copy(paymentState = "ENVIADO COM SUCESSO")
                     Handler(Looper.getMainLooper()).postDelayed({
-                        stopServiceAndGoBack()
+                        stopServiceAndGoToInformation()
                     }, 1000)
                 }
 
@@ -317,12 +324,16 @@ class PaymentViewModel @Inject constructor(
     }
 
     private fun stopServiceAndGoBack() {
-
         plugPag.disposeSubscriber()
         plugPag.unbindService()
         runBlocking { _uiEvent.send(UIEvent.GoToBack) }
     }
 
+    private fun stopServiceAndGoToInformation() {
+        plugPag.disposeSubscriber()
+        plugPag.unbindService()
+        runBlocking { _uiEvent.send(UIEvent.GoToInformation) }
+    }
 
     private fun getCustomPrinterDialog(): PlugPagCustomPrinterLayout {
         val customDialog = PlugPagCustomPrinterLayout()

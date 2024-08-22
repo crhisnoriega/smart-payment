@@ -48,8 +48,8 @@ class InformationViewModel @Inject constructor(
     }
 
 
-    fun updateUIState(uiState: UIState) {
-        if (_uiState !is UIState.HideInformation) {
+    fun updateUIState(uiState: UIState?) {
+        if (uiState != null && _uiState !is UIState.HideInformation) {
             _uiState = uiState
             Handler(Looper.getMainLooper()).postDelayed({
                 _uiState = UIState.HideInformation

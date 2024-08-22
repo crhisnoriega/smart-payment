@@ -50,7 +50,7 @@ import br.com.trybu.ui.widget.text.AppTextField
 @Composable
 fun InformationScreen(
     viewModel: InformationViewModel = hiltViewModel(),
-    initializeSuccess: UIState.InitializeSuccess,
+    initializeSuccess: UIState.InitializeSuccess?,
     route: (String) -> Unit,
 ) {
     Log.d("log", "InformationScreen: $initializeSuccess")
@@ -64,7 +64,7 @@ fun InformationScreen(
     val bottomSheet = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val uiState = viewModel._uiState
     val qrCode by viewModel.qrCode.observeAsState()
-    var reprint by remember { mutableStateOf(false) }
+    var reprint by  viewModel.reprint
 
     LaunchedEffect(qrCode) {
         if (!qrCode.isNullOrEmpty()) {
@@ -86,7 +86,6 @@ fun InformationScreen(
                 route(goTo)
             },
             printLast = {
-                reprint = true
                 viewModel.printLast()
 
             },
