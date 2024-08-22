@@ -35,7 +35,6 @@ class PaymentRepository @Inject constructor(
         if (response.body()?.errors?.isEmpty() == false) {
             throw Exception(response.body()?.errors?.first()?.errorDescription)
         } else {
-
             response.body()?.operations?.forEach {
                 joined.add(
                     RetrieveOperationsResponse.Operation.TransactionType(

@@ -356,18 +356,4 @@ class PaymentViewModel @Inject constructor(
             _uiEvent.send(UIEvent.GoToInformation)
         }
     }
-
-
-    fun abortGoToBack() {
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                plugPag.abort()
-            } catch (_: IllegalArgumentException) {
-            }
-        }
-
-        viewModelScope.launch {
-            _uiEvent.send(UIEvent.GoToBack)
-        }
-    }
 }

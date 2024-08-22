@@ -29,7 +29,9 @@ sealed class UIState(
 
     data object EmptyList : UIState()
     data object LoadingList : UIState()
-    class ErrorOperations(error: String?) : UIState()
+    class ErrorOperations(
+        val errorMessage: String?
+    ) : UIState()
     class ErrorGoToPayment(errors: List<RetrieveOperationsResponse.Error>?) : UIState()
     class TryPayment(
         val transactionType: RetrieveOperationsResponse.Operation.TransactionType? = null,

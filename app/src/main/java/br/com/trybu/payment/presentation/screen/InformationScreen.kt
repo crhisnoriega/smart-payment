@@ -60,10 +60,12 @@ fun InformationScreen(
 
 
     LaunchedEffect(Unit) {
-        viewModel.updateUIState(initializeSuccess)
-        mainViewModel.qrListener = object : MainViewModel.QRListener {
-            override fun onQRCode(contents: String) {
-                viewModel.qrCode.value = contents
+        if (initializeSuccess != null) {
+            viewModel.updateUIState(initializeSuccess)
+            mainViewModel.qrListener = object : MainViewModel.QRListener {
+                override fun onQRCode(contents: String) {
+                    viewModel.qrCode.value = contents
+                }
             }
         }
     }

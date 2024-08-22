@@ -104,6 +104,10 @@ fun OperationsListingScreen(
                 LoadingFullScreen()
             }
 
+            is UIState.ErrorOperations -> {
+                EmptyList(message = uiState.errorMessage ?: "Erro desconhecido")
+            }
+
             else -> {}
         }
     }
