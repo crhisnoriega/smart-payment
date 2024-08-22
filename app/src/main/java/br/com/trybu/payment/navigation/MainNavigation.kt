@@ -10,12 +10,14 @@ import br.com.trybu.payment.presentation.screen.InformationScreen
 import br.com.trybu.payment.presentation.screen.InitializationScreen
 import br.com.trybu.payment.presentation.screen.OperationsListingScreen
 import br.com.trybu.payment.presentation.screen.PendingTransactionsScreen
+import br.com.trybu.payment.presentation.viewmodel.MainViewModel
 import br.com.trybu.payment.presentation.viewmodel.UIState
 import com.google.gson.Gson
 
 @Composable
 fun MainNavigation(
-    controller: NavHostController
+    controller: NavHostController,
+    mainViewModel: MainViewModel
 ) {
     NavHost(
         navController = controller,
@@ -35,7 +37,10 @@ fun MainNavigation(
             } catch (e: Exception) {
                 null
             }
-            InformationScreen(initializeSuccess = intializationState) { route ->
+            InformationScreen(
+                initializeSuccess = intializationState,
+                mainViewModel = mainViewModel
+            ) { route ->
                 controller.navigate(route)
             }
         }

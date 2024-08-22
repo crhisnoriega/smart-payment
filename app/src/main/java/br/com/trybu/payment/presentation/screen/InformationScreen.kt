@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.trybu.payment.navigation.Routes
 import br.com.trybu.payment.presentation.viewmodel.InformationViewModel
+import br.com.trybu.payment.presentation.viewmodel.MainViewModel
 import br.com.trybu.payment.presentation.viewmodel.UIState
 import br.com.trybu.ui.theme.AppTheme
 import br.com.trybu.ui.theme.Body1
@@ -50,6 +51,7 @@ import br.com.trybu.ui.widget.text.AppTextField
 @Composable
 fun InformationScreen(
     viewModel: InformationViewModel = hiltViewModel(),
+    mainViewModel: MainViewModel,
     initializeSuccess: UIState.InitializeSuccess?,
     route: (String) -> Unit,
 ) {
@@ -59,12 +61,17 @@ fun InformationScreen(
 
     LaunchedEffect(Unit) {
         viewModel.updateUIState(initializeSuccess)
+        mainViewModel.qrListener = object : MainViewModel.QRListener {
+            override fun onQRCode(contents: String) {
+                viewModel.qrCode.value = contents
+            }
+        }
     }
 
     val bottomSheet = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val uiState = viewModel._uiState
     val qrCode by viewModel.qrCode.observeAsState()
-    var reprint by  viewModel.reprint
+    var reprint by viewModel.reprint
 
     LaunchedEffect(qrCode) {
         if (!qrCode.isNullOrEmpty()) {
@@ -80,7 +87,7 @@ fun InformationScreen(
         }
     ) { padding ->
         InformationContent(
-            goToQRCode = { viewModel.openCamera() },
+            goToQRCode = { mainViewModel.openCamera() },
             goToOps = {
                 val goTo = Routes.payment.operations.replace("{query}", it)
                 route(goTo)
