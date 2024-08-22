@@ -146,7 +146,7 @@ fun InformationContent(
     printLast: () -> Unit,
     reprint: Boolean
 ) {
-    var query by remember { mutableStateOf("11111111111") }
+    var query by remember { mutableStateOf("") }
     Column(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.SpaceBetween

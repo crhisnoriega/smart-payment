@@ -45,23 +45,36 @@ class OperationInfoViewModel @Inject constructor(
             )
         }.collect {
             Log.i("log", "response: $it")
-            when (it) {
-                is Resources.Success<*> -> {
-                    val newOperations = it.data as List<RetrieveOperationsResponse.Operation>
-                    _uiState =
-                        if (newOperations.isEmpty()) UIState.EmptyList else UIState.OperationList(
-                            operations = newOperations
+            if (it == null) {
+                _uiState = UIState.ErrorOperations(
+                    errorMessage = "Erro de conexão com o servidor.",
+                )
+            } else {
+                when (it) {
+                    is Resources.Success<*> -> {
+                        if (it.data == null) {
+                            _uiState = UIState.ErrorOperations(
+                                errorMessage = "Erro de conexão com o servidor.",
+                            )
+                        } else {
+                            val newOperations =
+                                it.data as List<RetrieveOperationsResponse.Operation>
+                            _uiState =
+                                if (newOperations.isEmpty()) UIState.EmptyList else UIState.OperationList(
+                                    operations = newOperations
+                                )
+                        }
+                    }
+
+                    is Resources.Error -> {
+                        _uiState = UIState.ErrorOperations(
+                            errorMessage = it.message,
                         )
-                }
+                    }
 
-                is Resources.Error -> {
-                    _uiState = UIState.ErrorOperations(
-                        errorMessage = it.message,
-                    )
-                }
+                    else -> {
 
-                else -> {
-
+                    }
                 }
             }
         }

@@ -22,6 +22,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import java.util.UUID
@@ -42,27 +43,37 @@ class InitializationnViewModel @Inject constructor(
 
 
     fun retrieveKey() = CoroutineScope(Dispatchers.IO).launch {
-        paymentRepository.retrieveKey(serialNumber = Build.SERIAL)
-            .collect { establishment ->
-                if (establishment?.errors?.isEmpty() == true) {
-                    establishment.key.let { keyRepository.persisKey(it) }
-
-                    val pendingTransactions = transactionDao.pendingTransaction()
-
-                    if (pendingTransactions.isEmpty()) {
-                        _uiState = UIState.InitializeSuccess(
-                            establishmentName = establishment.establismentName,
-                            establishmentDocument = establishment.document
-                        )
-                        _uiEvent.send(UIEvent.GoToInformation)
-                    } else {
-                        _uiEvent.send(UIEvent.GoToPending)
-                    }
-                } else {
+        try {
+            paymentRepository.retrieveKey(serialNumber = Build.SERIAL)
+                .catch {
                     _uiState = UIState.InitializeFail
-                    _uiEvent.send(UIEvent.GoToInformation)
                 }
-            }
+                .collect { establishment ->
+
+                    if (establishment == null) {
+                        _uiState = UIState.InitializeFail
+                    } else if (establishment?.errors?.isEmpty() == true) {
+                        establishment.key.let { keyRepository.persisKey(it) }
+
+                        val pendingTransactions = transactionDao.pendingTransaction()
+
+                        if (pendingTransactions.isEmpty()) {
+                            _uiState = UIState.InitializeSuccess(
+                                establishmentName = establishment.establismentName,
+                                establishmentDocument = establishment.document
+                            )
+                            _uiEvent.send(UIEvent.GoToInformation)
+                        } else {
+                            _uiEvent.send(UIEvent.GoToPending)
+                        }
+                    } else {
+                        _uiState = UIState.InitializeFail
+                        _uiEvent.send(UIEvent.GoToInformation)
+                    }
+                }
+        } catch (e: Exception) {
+            _uiState = UIState.InitializeFail
+        }
     }
 
     fun exit() {
