@@ -22,13 +22,13 @@ class MainViewModel @Inject constructor() : ViewModel() {
         qrCode.postValue(QRUIState.ReadQRCode)
     }
 
-    interface QRListener{
+    interface QRListener {
         fun onQRCode(contents: String)
     }
 
 }
 
 sealed class QRUIState {
-    object ReadQRCode : QRUIState()
+    data object ReadQRCode : QRUIState()
     data class ResulQRCode(val qrCode: String) : QRUIState()
 }

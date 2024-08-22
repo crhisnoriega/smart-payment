@@ -53,11 +53,11 @@ fun MainNavigation(
         }
 
         composable(route = Routes.payment.pending) {
-            PendingTransactionsScreen(goToInput = {
-                controller.navigate(Routes.payment.information)
-            }, onBackPress = {
-                controller.navigate(Routes.payment.initialize)
-            })
+            PendingTransactionsScreen {
+                controller.navigate(Routes.payment.initialize) {
+                    popUpTo(0)
+                }
+            }
         }
 
         composable(route = Routes.payment.details) { entry ->

@@ -17,8 +17,10 @@ import br.com.trybu.payment.util.sanitizeToSend
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -31,7 +33,11 @@ constructor(
 ) : ViewModel() {
 
     var pendingTransactions by mutableStateOf<List<Transaction>>(listOf())
-    var statePending by mutableStateOf("")
+    var _uiState by mutableStateOf<UIState>(UIState.Nothing)
+
+    private var _uiEvent = Channel<UIEvent>()
+    val uiEvent = _uiEvent.receiveAsFlow()
+
 
     fun checkPendingTransactions() = CoroutineScope(Dispatchers.IO).launch {
         val transactions = pendingTransactions()
@@ -56,10 +62,10 @@ constructor(
 
         delay(1000)
 
-        statePending = if (pendingTransactions().isEmpty()) {
-            "success"
+        _uiState = if (pendingTransactions().isEmpty()) {
+            UIState.SuccessPending
         } else {
-            "fail"
+            UIState.FailPending
         }
     }
 

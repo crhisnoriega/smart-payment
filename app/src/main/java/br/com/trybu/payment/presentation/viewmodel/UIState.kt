@@ -37,7 +37,10 @@ sealed class UIState(
         val sessionID: String? = null,
     ) : UIState()
 
+    object PendingProcessing : UIState()
     data object HideInformation : UIState()
+    object SuccessPending : UIState()
+    object FailPending : UIState()
 }
 
 

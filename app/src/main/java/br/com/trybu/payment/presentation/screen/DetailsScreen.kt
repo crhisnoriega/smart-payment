@@ -61,7 +61,7 @@ fun DetailsScreen(
         modifier = Modifier.fillMaxSize(),
         topBar = {
             AppTopBar(painter = painterResource(id = R.drawable.logo_elosgate)) {
-                viewModel.abort()
+                viewModel.abortGoToBack()
             }
         }
     ) { padding ->
@@ -98,7 +98,7 @@ fun DetailsScreen(
             LazyColumn(modifier = Modifier.fillMaxWidth()) {
                 item {
                     TertiaryButton(
-                        onClick = { viewModel.abort() },
+                        onClick = { viewModel.abortGoToBack() },
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(text = "Cancelar Operação")

@@ -1,5 +1,6 @@
 package br.com.trybu.payment.presentation.screen
 
+import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
@@ -19,6 +20,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -28,30 +31,36 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.trybu.payment.R
 import br.com.trybu.payment.data.model.RetrieveOperationsResponse
 import br.com.trybu.payment.db.entity.Transaction
+import br.com.trybu.payment.navigation.Routes
 import br.com.trybu.payment.presentation.viewmodel.PendingViewModel
+import br.com.trybu.payment.presentation.viewmodel.UIEvent
+import br.com.trybu.payment.presentation.viewmodel.UIState
 import br.com.trybu.ui.theme.Subtitle2
 import br.com.trybu.ui.theme.blue_500
 import br.com.trybu.ui.widget.AppScaffold
 import br.com.trybu.ui.widget.AppTopBar
 import br.com.trybu.ui.widget.button.PrimaryButton
 import br.com.trybu.ui.widget.card.AppCard
+import com.google.gson.Gson
 
 @Composable
 fun PendingTransactionsScreen(
     operationInfoViewModel: PendingViewModel = hiltViewModel(),
-    goToInput: () -> Unit,
     onBackPress: () -> Unit
 ) {
     val pendingTransactions = operationInfoViewModel.pendingTransactions
-    var state = operationInfoViewModel.statePending
+    val uiState = operationInfoViewModel._uiState
+    val uiEvent by operationInfoViewModel.uiEvent.collectAsState(initial = UIEvent.None)
+
+    LaunchedEffect(uiEvent) {
+        when (uiEvent) {
+            is UIEvent.GoToBack -> onBackPress()
+            else -> {}
+        }
+    }
 
     LaunchedEffect(Unit) {
         operationInfoViewModel.checkPendingTransactions()
-    }
-
-    if (state == "success") {
-        goToInput()
-        state = ""
     }
 
     BackHandler { onBackPress() }
@@ -79,16 +88,21 @@ fun PendingTransactionsScreen(
             }
 
             Spacer(modifier = Modifier.height(20.dp))
-            if (state == "") {
-                Text(text = "Tentanto envio...", style = Subtitle2)
-            }
 
-            if (state == "fail") {
-                PrimaryButton(onClick = {
-                    operationInfoViewModel.checkPendingTransactions()
-                }) {
-                    Text(text = "Tentar Envio")
+            when(uiState){
+                is UIState.PendingProcessing -> {
+                    Text(text = "Tentanto envio...", style = Subtitle2)
                 }
+
+                is UIState.FailPending -> {
+                    PrimaryButton(onClick = {
+                        operationInfoViewModel.checkPendingTransactions()
+                    }) {
+                        Text(text = "Tentar Envio")
+                    }
+                }
+
+                else -> {}
             }
         }
     }
