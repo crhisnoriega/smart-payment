@@ -130,7 +130,7 @@ class PaymentViewModel @Inject constructor(
                         userReference = USER_REFERENCE,
                         printReceipt = false,
                         partialPay = false,
-                        isCarne = false
+                        isCarne = false,
                     )
                 )
 
@@ -235,13 +235,13 @@ class PaymentViewModel @Inject constructor(
         transaction: Transaction
     ) {
         when (transaction.transactionStatus) {
-            TransactionStatus.APPROVED -> sendTransactionResult(transaction)
-            TransactionStatus.REJECTED -> {
-                sendAbort(transaction.id, transaction.sessionID)
-                Handler(Looper.getMainLooper()).postDelayed({
-                    stopServiceAndGoBack()
-                }, 1000)
-            }
+            TransactionStatus.APPROVED, TransactionStatus.REJECTED -> sendTransactionResult(transaction)
+//            TransactionStatus.REJECTED -> {
+//                sendAbort(transaction.id, transaction.sessionID)
+//                Handler(Looper.getMainLooper()).postDelayed({
+//                    stopServiceAndGoBack()
+//                }, 1000)
+ //           }
 
             else -> updateTransactionAsStatus(transaction, Status.ERROR_ACK)
         }
@@ -279,7 +279,8 @@ class PaymentViewModel @Inject constructor(
                 paymentRepository.confirmPayment(
                     transactionId = transaction.id,
                     jsonTransaction = transaction.jsonTransaction.sanitizeToSend(),
-                    key = keyRepository.retrieveKey() ?: ""
+                    key = keyRepository.retrieveKey() ?: "",
+                    sessionID = transaction.sessionID
                 )
             } else {
                 paymentRepository.confirmRefund(

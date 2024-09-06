@@ -33,7 +33,8 @@ abstract class TransactionDao {
         findTransaction(transaction.id)?.let {
             updateTransaction(transaction)
         } ?: run {
-            insertTransaction(transaction)
+            val insertResult = insertTransaction(transaction)
+            Log.i("log", "insertResult: $insertResult")
         }
     }
 }

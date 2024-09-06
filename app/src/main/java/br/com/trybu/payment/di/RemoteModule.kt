@@ -60,7 +60,7 @@ object RemoteModule {
 
         val httpClient = builder.build()
         return Retrofit.Builder()
-            .baseUrl("https://svc-hom.elosgate.com.br/generated/gatewaysvc.svc/json/")
+            .baseUrl("https://svc2.elosgate.com.br/generated/gatewaysvc.svc/json/")
             .addConverterFactory(GsonConverterFactory.create(gson))
             .client(httpClient).build()
     }

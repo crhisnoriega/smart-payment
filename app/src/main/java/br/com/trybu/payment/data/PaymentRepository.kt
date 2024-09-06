@@ -49,13 +49,18 @@ class PaymentRepository @Inject constructor(
         }
     }
 
-    suspend fun confirmPayment(transactionId: String, jsonTransaction: String, key: String) = flow {
+    suspend fun confirmPayment(
+        transactionId: String,
+        jsonTransaction: String,
+        key: String,
+        sessionID: String
+    ) = flow {
         val response = smartPaymentAPI.paymentConfirm(
             ConfirmRequest(
                 transactionId = transactionId,
                 jsonRaw = jsonTransaction,
-                key = key
-
+                key = key,
+                sessionID = sessionID,
             )
         )
         emit(response)

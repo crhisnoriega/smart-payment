@@ -52,7 +52,7 @@ class InitializationnViewModel @Inject constructor(
 
                     if (establishment == null) {
                         _uiState = UIState.InitializeFail
-                    } else if (establishment?.errors?.isEmpty() == true) {
+                    } else if (establishment.errors?.isEmpty() == true) {
                         establishment.key.let { keyRepository.persisKey(it) }
 
                         val pendingTransactions = transactionDao.pendingTransaction()

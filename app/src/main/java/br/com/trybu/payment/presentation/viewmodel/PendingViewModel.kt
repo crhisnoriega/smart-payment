@@ -14,6 +14,8 @@ import br.com.trybu.payment.db.entity.Transaction
 import br.com.trybu.payment.db.entity.TransactionStatus
 import br.com.trybu.payment.db.entity.currentDate
 import br.com.trybu.payment.util.sanitizeToSend
+import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPag
+import com.google.gson.Gson
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -30,6 +32,7 @@ constructor(
     private val transactionDao: TransactionDao,
     private val paymentRepository: PaymentRepository,
     private val keyRepository: KeyRepository,
+    private val plugPag: PlugPag,
 ) : ViewModel() {
 
     var pendingTransactions by mutableStateOf<List<Transaction>>(listOf())
@@ -52,12 +55,24 @@ constructor(
 
         pendingTransactions.forEach { transaction ->
             when (transaction.status) {
-                Status.CREATED -> doAbortPayment(transaction)
+                Status.CREATED -> {
+                    //doAbortPayment(transaction)
+                    val lastTransaction = plugPag.getLastApprovedTransaction()
+
+                    lastTransaction?.amount
+
+                    val transactionCopy = transaction.copy(
+                        jsonTransaction = Gson().toJson(lastTransaction),
+                        transactionStatus = TransactionStatus.APPROVED
+                    )
+                    sendAndPersistTransaction(transactionCopy)
+                }
                 Status.PROCESSED -> sendAndPersistTransaction(transaction)
                 Status.ERROR_ACK -> sendTransactionResult(transaction)
                 else -> {}
             }
         }
+
 
 
         delay(1000)
@@ -110,7 +125,8 @@ constructor(
                 paymentRepository.confirmPayment(
                     transactionId = transaction.id,
                     jsonTransaction = transaction.jsonTransaction.sanitizeToSend(),
-                    key = keyRepository.retrieveKey() ?: ""
+                    key = keyRepository.retrieveKey() ?: "",
+                    sessionID = transaction.sessionID
                 )
             } else {
                 paymentRepository.confirmRefund(
