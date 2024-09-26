@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="action_back">Voltar</string>
-    <string name="action_close_tutorial">Fechar tutorial</string>
-    <string name="action_close">Fechar</string>
-</resources>
